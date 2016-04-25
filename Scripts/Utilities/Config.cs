@@ -86,7 +86,8 @@ namespace IBM.Watson.DeveloperCloud.Utilities
             /// <returns>Returns true on success.</returns>
             public bool ParseJSON( string json )
             {
-                try {
+                try
+				{
                     IDictionary iParse = Json.Deserialize( json ) as IDictionary;
                     IDictionary iCredentials = iParse["credentials"] as IDictionary;
                     m_URL = (string)iCredentials["url"];
@@ -111,12 +112,6 @@ namespace IBM.Watson.DeveloperCloud.Utilities
         private float m_TimeOut = 30.0f;
         [fsProperty]
         private int m_MaxRestConnections = 5;
-        [fsProperty]
-        private bool m_EnableGateway = false;
-        [fsProperty]
-        private string m_GatewayURL = ""; //"https://9.53.162.55:9443/webApp";
-        [fsProperty]
-        private string m_ProductKey = null;
         [fsProperty]
         private List<CredentialInfo> m_Credentials = new List<CredentialInfo>();
         [fsProperty]
@@ -155,19 +150,6 @@ namespace IBM.Watson.DeveloperCloud.Utilities
         /// Returns a list of variables which can hold key/value data.
         /// </summary>
         public List<Variable> Variables { get { return m_Variables; } set { m_Variables = value; } }
-        /// <summary>
-        /// Enable the gateway usage.
-        /// </summary>
-        public bool EnableGateway { get { return m_EnableGateway; } set { m_EnableGateway = value; } }
-        /// <summary>
-        /// The URL of the gateway to use.
-        /// </summary>
-        public string GatewayURL { get { return m_GatewayURL; } set { m_GatewayURL = value; } }
-        /// <summary>
-        /// The product key used to communicate with the gateway.
-        /// </summary>
-        public string ProductKey { get { return m_ProductKey; } set { m_ProductKey = value; } }
-
         #endregion
 
         /// <summary>
@@ -198,7 +180,8 @@ namespace IBM.Watson.DeveloperCloud.Utilities
         public void LoadConfig()
         {
 #if !UNITY_ANDROID || UNITY_EDITOR
-            try {
+            try
+			{
                 if (! Directory.Exists( Application.streamingAssetsPath ) )
                     Directory.CreateDirectory( Application.streamingAssetsPath );
 				LoadConfig( System.IO.File.ReadAllText( Application.streamingAssetsPath + Constants.Path.CONFIG_FILE ) );
@@ -221,7 +204,8 @@ namespace IBM.Watson.DeveloperCloud.Utilities
         /// <returns></returns>
         public bool LoadConfig(string json)
         {
-            try {
+            try
+			{
                 fsData data = null;
                 fsResult r = fsJsonParser.Parse(json, out data);
                 if (!r.Succeeded)
@@ -364,8 +348,5 @@ namespace IBM.Watson.DeveloperCloud.Utilities
             LoadConfig(request.text);
             yield break;
         }
-
-
-
     }
 }

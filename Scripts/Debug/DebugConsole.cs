@@ -22,6 +22,8 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using IBM.Watson.DeveloperCloud.Widgets;
+using System.Collections;
 
 namespace IBM.Watson.DeveloperCloud.Debug
 {
@@ -78,6 +80,8 @@ namespace IBM.Watson.DeveloperCloud.Debug
         private LayoutGroup m_DebugInfoLayout = null;
         [SerializeField]
         private Text m_DebugInfoPrefab = null;
+
+		private MicrophoneWidget m_MicWidget = null;
         #endregion
 
         #region Public Properties
@@ -89,7 +93,8 @@ namespace IBM.Watson.DeveloperCloud.Debug
         /// Returns true if this debug console output is being displayed.
         /// </summary>
         public bool ActiveOutput { get { return m_ActiveOutput; }
-            set {
+            set
+			{
                 if ( m_ActiveOutput != value )
                 {
                     m_ActiveOutput = value;
@@ -102,7 +107,8 @@ namespace IBM.Watson.DeveloperCloud.Debug
         /// Returns true if this debug input field is being displayed.
         /// </summary>
         public bool ActiveInput { get { return m_ActiveInput; }
-            set {
+            set
+			{
                 if ( m_ActiveInput != value )
                 {
                     m_ActiveInput = value;
@@ -177,29 +183,30 @@ namespace IBM.Watson.DeveloperCloud.Debug
             {
                 m_RootInput.SetActive(m_ActiveInput);
                 m_RootOutput.SetActive(m_ActiveOutput);
+				m_MicWidget = FindObjectOfType<MicrophoneWidget>();
             }
         }
 
         private void OnEnable()
         {
-            EventManager.Instance.RegisterEventReceiver(Constants.Event.ON_DEBUG_MESSAGE, OnDebugMessage);
+            EventManager.Instance.RegisterEventReceiver("OnDebugMessage", OnDebugMessage);
 
-            EventManager.Instance.RegisterEventReceiver(Constants.Event.ON_DEBUG_TOGGLE, OnToggleActive);
-            EventManager.Instance.RegisterEventReceiver(Constants.Event.ON_KEYBOARD_BACKQUOTE, OnToggleActive);
+            EventManager.Instance.RegisterEventReceiver("OnDebugToggle", OnToggleActive);
+            EventManager.Instance.RegisterEventReceiver("OnKeyboardBackquote", OnToggleActive);
 
-            EventManager.Instance.RegisterEventReceiver(Constants.Event.ON_DEBUG_BEGIN_COMMAND, OnBeginEdit);
-            EventManager.Instance.RegisterEventReceiver(Constants.Event.ON_KEYBOARD_RETURN, OnBeginEdit);
+            EventManager.Instance.RegisterEventReceiver("OnDebugBeginCommand", OnBeginEdit);
+            EventManager.Instance.RegisterEventReceiver("OnKeyboardReturn", OnBeginEdit);
         }
 
         private void OnDisable()
         {
-            EventManager.Instance.UnregisterEventReceiver(Constants.Event.ON_DEBUG_MESSAGE, OnDebugMessage);
+			EventManager.Instance.UnregisterEventReceiver("OnDebugMessage", OnDebugMessage);
 
-            EventManager.Instance.UnregisterEventReceiver(Constants.Event.ON_DEBUG_TOGGLE, OnToggleActive);
-            EventManager.Instance.UnregisterEventReceiver(Constants.Event.ON_KEYBOARD_BACKQUOTE, OnToggleActive);
+			EventManager.Instance.UnregisterEventReceiver("OnDebugToggle", OnToggleActive);
+			EventManager.Instance.UnregisterEventReceiver("OnKeyboardBackquote", OnToggleActive);
 
-            EventManager.Instance.UnregisterEventReceiver(Constants.Event.ON_DEBUG_BEGIN_COMMAND, OnBeginEdit);
-            EventManager.Instance.UnregisterEventReceiver(Constants.Event.ON_KEYBOARD_RETURN, OnBeginEdit);
+			EventManager.Instance.UnregisterEventReceiver("OnDebugBeginCommand", OnBeginEdit);
+			EventManager.Instance.UnregisterEventReceiver("OnKeyboardReturn", OnBeginEdit);
         }
 
         private void Update()
@@ -239,7 +246,7 @@ namespace IBM.Watson.DeveloperCloud.Debug
         private void OnToggleActive( object [] args )
         {
             ActiveOutput = !ActiveOutput;
-            EventManager.Instance.SendEvent( Constants.Event.ON_DEBUG_TOGGLE_FINISH);
+            EventManager.Instance.SendEvent("OnDebugToggleFinish");
         }
 
         private void OnBeginEdit( object [] args )
@@ -252,6 +259,13 @@ namespace IBM.Watson.DeveloperCloud.Debug
 
                 // turn off all key press events..
                 KeyEventManager.Instance.Active = false;
+
+				//	turn off mic
+				if(m_MicWidget != null)
+					m_MicWidget.Active = false;
+
+				//	timer to turn mic back on
+				StartCoroutine(ActivateMicAfterTime(10f));
             }
         }
 
@@ -262,15 +276,26 @@ namespace IBM.Watson.DeveloperCloud.Debug
         {
             if ( m_CommandInput != null )
             {
-                EventManager.Instance.SendEvent( Constants.Event.ON_DEBUG_COMMAND, m_CommandInput.text );
+                EventManager.Instance.SendEvent("OnDebugCommand", m_CommandInput.text );
                 m_CommandInput.text = string.Empty;
                 m_CommandInput.gameObject.SetActive( false );   // hide the input     
                 ActiveInput = false;
 
                 // restore the key manager state
                 KeyEventManager.Instance.Active = true;
+
+				//	turn on mic
+				if(m_MicWidget != null)
+					m_MicWidget.Active = true;
             }
         }
+
+		private IEnumerator ActivateMicAfterTime(float time)
+		{
+			yield return new WaitForSeconds(time);
+			if(m_MicWidget != null)
+				m_MicWidget.Active = true;
+		}
         #endregion
     }
 }

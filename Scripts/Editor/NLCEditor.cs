@@ -18,8 +18,7 @@
 #if UNITY_EDITOR
 
 using IBM.Watson.DeveloperCloud.Utilities;
-using IBM.Watson.DeveloperCloud.Services.v1;
-using IBM.Watson.DeveloperCloud.DataModels;
+using IBM.Watson.DeveloperCloud.Services.NaturalLanguageClassifier.v1;
 using IBM.Watson.DeveloperCloud.Logging;
 using UnityEditor;
 using UnityEngine;
@@ -277,7 +276,8 @@ namespace IBM.Watson.DeveloperCloud.Editor
                         var path = EditorUtility.OpenFilePanel("Select Training File", "", "csv");
                         if (!string.IsNullOrEmpty(path))
                         {
-                            try {
+                            try
+							{
                                 data.Import( path );
                             }
                             catch
