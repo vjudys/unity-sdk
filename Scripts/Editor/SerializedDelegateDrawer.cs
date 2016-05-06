@@ -44,7 +44,6 @@ namespace IBM.Watson.DeveloperCloud.Editor
             SerializedProperty componentProperty = properties.FindPropertyRelative("m_Component");
 
             // pass through label
-            EditorGUIUtility.LookLikeControls();
             EditorGUI.LabelField(
                 new Rect(pos.x, pos.y, pos.width / 2, pos.height / rows),
                 label

@@ -61,7 +61,6 @@ namespace IBM.Watson.DeveloperCloud.Editor
             if (target.Owner == null)
                 target.Owner = property.serializedObject.targetObject as Widget;
 
-            //EditorGUIUtility.LookLikeControls();
             bool expanded_state = sm_ExpandedStates[property.propertyPath];
             bool expanded = EditorGUI.Foldout(m_Expanded ? new Rect(pos.x, pos.y, pos.width / 2, pos.height / m_Rows) : pos, expanded_state, label);
             if (expanded_state)
