@@ -35,6 +35,10 @@ namespace IBM.Watson.DeveloperCloud.Utilities
             /// Configuration file name.
             /// </summary>
             public const string CONFIG_FILE = "/Config.json";
+			/// <summary>
+			/// Local configuration file name. Loaded last and overrides what was loaded before
+			/// </summary>
+			public const string LOCAL_CONFIG_FILE = "/LocalConfig.json";
             /// <summary>
             /// Cache folder to customize a parent folder for cache directory
             /// </summary>

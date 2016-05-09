@@ -29,7 +29,7 @@ namespace IBM.Watson.DeveloperCloud.Utilities
     /// <summary>
     /// This class is used to hold configuration data for SDK.
     /// </summary>
-    public class Config
+	public class Config
     {
         /// <summary>
         /// Serialized class for holding generic key/value pairs.
@@ -185,7 +185,10 @@ namespace IBM.Watson.DeveloperCloud.Utilities
                 if (!Directory.Exists(Application.streamingAssetsPath))
                     Directory.CreateDirectory(Application.streamingAssetsPath);
                 LoadConfig(System.IO.File.ReadAllText(Application.streamingAssetsPath + Constants.Path.CONFIG_FILE));
-            }
+
+				// Now read a local override that would allows us to replace distrubuted values with the user specific ones
+				MergeConfigs(System.IO.File.ReadAllText(Application.streamingAssetsPath + Constants.Path.LOCAL_CONFIG_FILE));
+			}
             catch (System.IO.FileNotFoundException)
             {
                 // mark as loaded anyway, so we don't keep retrying..
@@ -348,5 +351,56 @@ namespace IBM.Watson.DeveloperCloud.Utilities
             LoadConfig(request.text);
             yield break;
         }
+
+		/// <summary>
+		/// Merges the content of current config with a new content passed into the method. New content overrides old one.
+		/// </summary>
+		/// <param name="newConfig">New config content.</param>
+		public void MergeConfigs(string newConfig)
+		{
+			// Store current credentials and variables
+			List<CredentialInfo> savedCredentials = Credentials;
+			Credentials = null;
+			List<Variable> savedVariables = Variables;
+			Variables = null;
+
+			LoadConfig(newConfig);
+
+			// Merge previous credentials into the new config..
+			List<CredentialInfo> creds = Credentials;
+			if (creds != null && creds.Count != 0)
+			{
+				foreach (var cred in savedCredentials)
+				{
+					bool bFound = false;
+					for (int i = 0; i < creds.Count && !bFound; ++i)
+						if (creds [i].m_ServiceID == cred.m_ServiceID)
+							bFound = true;
+
+					if (!bFound)
+						creds.Add(cred);
+				}
+			}
+			else
+				Credentials = savedCredentials;
+
+			// Merge previous variables into the new config..
+			List<Variable> vars = Variables;
+			if (vars != null && vars.Count != 0)
+			{
+				foreach (var var in savedVariables)
+				{
+					bool bFound = false;
+					for (int i = 0; i < vars.Count && !bFound; ++i)
+						if (vars [i].Key == var.Key)
+							bFound = true;
+
+					if (!bFound)
+						vars.Add(var);
+				}
+			}
+			else
+				Variables = savedVariables;
+		}
     }
 }

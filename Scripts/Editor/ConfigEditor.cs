@@ -142,6 +142,12 @@ namespace IBM.Watson.DeveloperCloud.Editor
             RESTConnector.FlushConnectors();
         }
 
+		// Reloads all config information from the original sources. Useful for debugging
+		private static void ReloadConfig()
+		{
+			Config.Instance.LoadConfig();
+		}
+
         private static string FindFile( string directory, string name )
         {
             foreach( var f in Directory.GetFiles( directory ) )
@@ -364,6 +370,9 @@ namespace IBM.Watson.DeveloperCloud.Editor
                     SaveConfig();
                 }
 
+				if (GUILayout.Button("Reload"))
+					ReloadConfig();
+				
                 if ( GUILayout.Button( "Basic Mode" ) )
                 {
                     m_WizardMode = true;
