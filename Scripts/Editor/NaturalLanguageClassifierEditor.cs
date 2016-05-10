@@ -177,7 +177,7 @@ namespace IBM.Watson.DeveloperCloud.Editor
         private void OnDeleteClassifier(bool success)
         {
             if (!success)
-                Log.Error("Natural Language Classifier Trainer", "Failed to delete classifier.");
+				Log.Error("NaturalLanguageClassifierEditor", "Failed to delete classifier.");
             else
                 OnRefresh();
         }
@@ -223,7 +223,7 @@ namespace IBM.Watson.DeveloperCloud.Editor
                 }
 
                 if (!m_NaturalLanguageClassifier.GetClassifiers(OnGetClassifiers))
-                    Log.Error("Natural Language Classifier Trainer", "Failed to request classifiers, please make sure your NaturalLanguageClassifierV1 service has credentials configured.");
+					Log.Error("NaturalLanguageClassifierEditor", "Failed to request classifiers, please make sure your NaturalLanguageClassifierV1 service has credentials configured.");
                 else
                     m_Refreshing = true;
             }
