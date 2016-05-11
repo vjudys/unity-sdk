@@ -75,7 +75,7 @@ namespace IBM.Watson.DeveloperCloud.Services.NaturalLanguageClassifier.v1
         #endregion
 
         #region Private Data
-		private const string SERVICE_ID = "NlcV1"; //"NaturalLanguageClassifierV1"; - temporary change until we update production Config.json
+		private const string SERVICE_ID = "NaturalLanguageClassifierV1";
         private static fsSerializer sm_Serializer = new fsSerializer();
         private Dictionary<string, DataCache> m_ClassifyCache = new Dictionary<string, DataCache>();
         #endregion

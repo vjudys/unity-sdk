@@ -51,8 +51,7 @@ MonoBehaviour:
   m_EnableContinous: 1
   m_EnableInterimResults: 1
   m_Transcript: {fileID: 0}
-  m_Language: en-US
-  m_LogResult: 1
+  m_Language: en-UK
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
