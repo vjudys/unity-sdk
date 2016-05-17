@@ -17,13 +17,15 @@
 
 #if UNITY_EDITOR
 
-using UnityEngine;
-using UnityEditor;
+using System;
 using System.Collections;
-using IBM.Watson.DeveloperCloud.Utilities;
 using System.Collections.Generic;
 using System.IO;
-using System;
+using IBM.Watson.DeveloperCloud.Debug;
+using IBM.Watson.DeveloperCloud.Logging;
+using IBM.Watson.DeveloperCloud.Utilities;
+using UnityEditor;
+using UnityEngine;
 
 public class Build
 {
@@ -112,6 +114,10 @@ public class Build
 
     private static IEnumerator ExecuteBuild()
     {
+		ILogReactor debugReactor = new DebugReactor();
+		LogSystem.Instance.InstallReactor(debugReactor);
+		Log.Status("Build", "Started Build.ExecuteBuild(), target={0}", BuildTarget);
+
         yield return null;
 
         if (BuildTarget == BuildTarget.iOS)
@@ -151,7 +157,13 @@ public class Build
                 EditorApplication.Exit(string.IsNullOrEmpty(BuildError) ? 0 : 1);
         }
 
-        yield break;
+		if (String.IsNullOrEmpty(BuildError))
+			Log.Status("Build", "Finished Build.ExecuteBuild() successfully, player is at {0}", buildPath);
+		else
+			Log.Status("Build", "Finished Build.ExecuteBuild() unsuccessfully, error={0}", BuildError);
+		LogSystem.Instance.RemoveReactor(debugReactor);
+
+		yield break;
     }
 
 
