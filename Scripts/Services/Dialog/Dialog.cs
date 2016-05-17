@@ -489,13 +489,20 @@ namespace IBM.Watson.DeveloperCloud.Services.Dialog.v1
             {
                 if (m_Callback != null)
                 {
-                    foreach (var dialog in dialogs.dialogs)
-                    {
-                        if (!m_Service.Converse(dialog.dialog_id, "Hello", OnDialog))
-                            OnFailure("Failed to invoke Converse().");
-                        else
-                            m_DialogCount += 1;
-                    }
+					if (dialogs != null && dialogs.dialogs != null)
+					{
+						foreach (var dialog in dialogs.dialogs)
+						{
+							if (!m_Service.Converse(dialog.dialog_id, "Hello", OnDialog))
+								OnFailure("Failed to invoke Converse().");
+							else
+								m_DialogCount += 1;
+						}
+					}
+					else
+					{
+						OnFailure("GetDialogs() received no configured dialogs.");
+					}
                 }
                 else
                     OnFailure("GetDialogs() failed.");
