@@ -123,6 +123,11 @@ namespace IBM.Watson.DeveloperCloud.Widgets
 	    {
             base.Start();
 
+			if (Config.Instance.ConfigLoaded)
+			{
+				m_Language = Config.Instance.GetVariableValue("STT_LANGUAGE");
+			}
+
 	        if ( m_StatusText != null )
 	            m_StatusText.text = "READY";
             if (! m_SpeechToText.GetModels( OnGetModels ) )
