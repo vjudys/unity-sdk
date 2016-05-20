@@ -266,10 +266,10 @@ namespace IBM.Watson.DeveloperCloud.Debug
 
                 //	turn off mic
                 if (m_MicWidget != null)
-                    m_MicWidget.Active = false;
+					m_MicWidget.Disable = true;
 
                 //	timer to turn mic back on
-                StartCoroutine(ActivateMicAfterTime(10f));
+                StartCoroutine(EnableMicAfterTime(10f));
             }
         }
 
@@ -290,15 +290,15 @@ namespace IBM.Watson.DeveloperCloud.Debug
 
                 //	turn on mic
                 if (m_MicWidget != null)
-                    m_MicWidget.Active = true;
+                    m_MicWidget.Disable = false;
             }
         }
 
-        private IEnumerator ActivateMicAfterTime(float time)
+        private IEnumerator EnableMicAfterTime(float time)
         {
             yield return new WaitForSeconds(time);
             if (m_MicWidget != null)
-                m_MicWidget.Active = true;
+                m_MicWidget.Disable = false;
         }
         #endregion
     }
