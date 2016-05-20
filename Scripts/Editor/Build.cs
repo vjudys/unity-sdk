@@ -114,8 +114,6 @@ public class Build
 
     private static IEnumerator ExecuteBuild()
     {
-		ILogReactor debugReactor = new DebugReactor();
-		LogSystem.Instance.InstallReactor(debugReactor);
 		Log.Status("Build", "Started Build.ExecuteBuild(), target={0}", BuildTarget);
 
         yield return null;
@@ -161,7 +159,6 @@ public class Build
 			Log.Status("Build", "Finished Build.ExecuteBuild() successfully, player is at {0}", buildPath);
 		else
 			Log.Status("Build", "Finished Build.ExecuteBuild() unsuccessfully, error={0}", BuildError);
-		LogSystem.Instance.RemoveReactor(debugReactor);
 
 		yield break;
     }
