@@ -158,8 +158,6 @@ namespace IBM.Watson.DeveloperCloud.Logging
             {
                 m_Reactors.Add(reactor);
             }
-            // set our default reactor flag to true if the user installs their own reactors.
-            sm_bInstalledDefaultReactors = true;
         }
 
         /// <summary>
