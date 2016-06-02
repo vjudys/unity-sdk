@@ -315,13 +315,17 @@ namespace IBM.Watson.DeveloperCloud.Widgets
 
                         string sendEvent;
                         //						Constants.Event sendEvent;
-                        if (!m_ClassEventMap.TryGetValue(result.top_class, out sendEvent))
+                        if (!m_ClassEventMap.TryGetValue(result.top_class, out sendEvent)) 
                         {
-                            Log.Warning("NaturalLanguageClassifierWidget", "No class mapping found for {0}", result.top_class);
-                            EventManager.Instance.SendEvent(result.top_class, result);
+                            Log.Warning ("NaturalLanguageClassifierWidget", "No class mapping found for {0}", result.top_class);
+                            EventManager.Instance.SendEvent (result.top_class, result);
+                        } else 
+                        {
+                            if ( sendEvent != null )
+                                EventManager.Instance.SendEvent (sendEvent, result);
+                            else
+                                Log.Error("SendEvent", "There is a null sendEvent", sendEvent);
                         }
-                        else
-                            EventManager.Instance.SendEvent(sendEvent, result);
                     }
                     else
                     {
