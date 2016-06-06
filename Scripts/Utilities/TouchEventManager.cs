@@ -110,6 +110,24 @@ namespace IBM.Watson.DeveloperCloud.Utilities
             }
 
             /// <summary>
+            /// Touch event constructor for Tap Event registration. 
+            /// </summary>
+            /// <param name="collider">Collider of the object to tap</param>
+            /// <param name="callback">Callback for Tap Event. After tapped, callback will be invoked</param>
+            /// <param name="sortingLayer">Sorting level in order to sort the event listeners</param>
+            /// <param name="isInside">Whether the tap is inside the object or not</param>
+            public TouchEventData(Collider2D collider, string callback, int sortingLayer, bool isInside)
+            {
+                m_Collider = null;
+                m_Collider2D = collider;
+                m_ColliderList = null;
+                m_Collider2DList = null;
+                m_tapEventCallback = callback;
+                m_SortingLayer = sortingLayer;
+                m_isInside = isInside;
+            }
+
+            /// <summary>
             /// Touch event constructor for Drag Event registration. 
             /// </summary>
             /// <param name="gameObject">Gameobject to drag</param>
@@ -581,11 +599,15 @@ namespace IBM.Watson.DeveloperCloud.Utilities
                 {
                     Collider[] colliderList = gameObjectToTouch.GetComponentsInChildren<Collider>();
 
-                    if (colliderList != null)
+                    if (colliderList != null && colliderList.Length > 0)
                     {
                         foreach (Collider itemCollider in colliderList)
                         {
                             int layerMaskAsKey = (layerMask != default(LayerMask)) ? layerMask.value : (1 << gameObjectToTouch.layer);
+
+                            #if ENABLE_DEBUGGING
+                            Log.Debug("TouchEventManager", "RegisterTapEvent for 3D. itemCollider: {0}, callback: {1}, SortingLayer: {2}, isTapInside: {3}",itemCollider, callback, SortingLayer, isTapInside);
+                            #endif
 
                             if (m_TapEvents.ContainsKey(layerMaskAsKey))
                             {
@@ -601,8 +623,37 @@ namespace IBM.Watson.DeveloperCloud.Utilities
                     }
                     else
                     {
-                        Log.Warning("TouchEventManager", "There is no collider of given gameobjectToTouch");
+                        Log.Warning("TouchEventManager", "There is no 3D collider of given gameobjectToTouch");
                     }
+
+                    Collider2D[] colliderList2D = gameObjectToTouch.GetComponentsInChildren<Collider2D>();
+                    if (colliderList2D != null && colliderList2D.Length > 0)
+                    {
+                        foreach (Collider2D itemCollider in colliderList2D)
+                        {
+                            int layerMaskAsKey = (layerMask != default(LayerMask)) ? layerMask.value : (1 << gameObjectToTouch.layer);
+
+                            #if ENABLE_DEBUGGING
+                            Log.Debug("TouchEventManager", "RegisterTapEvent For 2D. itemCollider: {0}, callback: {1}, SortingLayer: {2}, isTapInside: {3}",itemCollider, callback, SortingLayer, isTapInside);
+                            #endif
+
+                            if (m_TapEvents.ContainsKey(layerMaskAsKey))
+                            {
+                                m_TapEvents[layerMaskAsKey].Add(new TouchEventData(itemCollider, callback, SortingLayer, isTapInside));
+                            }
+                            else
+                            {
+                                m_TapEvents[layerMaskAsKey] = new List<TouchEventData>() { new TouchEventData(itemCollider, callback, SortingLayer, isTapInside) };
+                            }
+                        }
+
+                        success = true;
+                    }
+                    else
+                    {
+                        Log.Warning("TouchEventManager", "There is no 2D collider of given gameobjectToTouch");
+                    }
+
                 }
                 else
                 {
@@ -702,6 +753,22 @@ namespace IBM.Watson.DeveloperCloud.Utilities
 
                     bool isHitOnLayer = Physics.Raycast(rayForTab, out hit, Mathf.Infinity, kp.Key);
 
+                    Transform hitTransform = null;
+
+                    if (isHitOnLayer)
+                    {
+                        hitTransform = hit.collider.transform;
+                    }
+                    else
+                    {
+                        RaycastHit2D hit2D = Physics2D.Raycast(rayForTab.origin, rayForTab.direction, Mathf.Infinity,  kp.Key);
+                        if (hit2D.collider != null)
+                        {
+                            isHitOnLayer = true;
+                            hitTransform = hit2D.collider.transform;
+                        }
+                    }
+
                     for (int i = 0; i < kp.Value.Count; ++i)
                     {
                         TouchEventData tapEventData = kp.Value[i];
@@ -720,13 +787,17 @@ namespace IBM.Watson.DeveloperCloud.Utilities
                             continue;
                         }
 
-                        if (isHitOnLayer && hit.collider.transform == tapEventData.Collider.transform && tapEventData.IsInside)
+                        if (isHitOnLayer && hitTransform == tapEventData.Collider.transform && tapEventData.IsInside)
                         {
                             //Tapped inside the object
                             if (tapEventToFire == null)
                             {
                                 tapEventToFire = tapEventData;
                                 hitToFire = hit;
+
+                                #if ENABLE_DEBUGGING
+                                Log.Debug("TouchEventManager", "Tap Event Found. itemCollider: {0}, callback: {1}, SortingLayer: {2}, isTapInside: {3} ",hitTransform, tapEventData.TapCallback, tapEventData.SortingLayer, tapEventData.IsInside);
+                                #endif
                             }
                             else
                             {
@@ -735,6 +806,10 @@ namespace IBM.Watson.DeveloperCloud.Utilities
                                 {
                                     tapEventToFire = tapEventData;
                                     hitToFire = hit;
+
+                                    #if ENABLE_DEBUGGING
+                                    Log.Debug("TouchEventManager", "Tap Event Found. itemCollider: {0}, callback: {1}, SortingLayer: {2}, isTapInside: {3} ",hitTransform, tapEventData.TapCallback, tapEventData.SortingLayer, tapEventData.IsInside);
+                                    #endif
                                 }
                                 else
                                 {
@@ -743,13 +818,17 @@ namespace IBM.Watson.DeveloperCloud.Utilities
                             }
 
                         }
-                        else if ((!isHitOnLayer || hit.collider.transform != tapEventData.Collider.transform) && !tapEventData.IsInside)
+                        else if ((!isHitOnLayer || hitTransform != tapEventData.Collider.transform) && !tapEventData.IsInside)
                         {
                             //Tapped outside the object
                             if (tapEventToFire == null)
                             {
                                 tapEventToFire = tapEventData;
                                 hitToFire = hit;
+
+                                #if ENABLE_DEBUGGING
+                                Log.Debug("TouchEventManager", "Tap Event Found. itemCollider: {0}, callback: {1}, SortingLayer: {2}, isTapInside: {3} ",hitTransform, tapEventData.TapCallback, tapEventData.SortingLayer, tapEventData.IsInside);
+                                #endif
                             }
                             else
                             {
@@ -757,6 +836,10 @@ namespace IBM.Watson.DeveloperCloud.Utilities
                                 {
                                     tapEventToFire = tapEventData;
                                     hitToFire = hit;
+
+                                    #if ENABLE_DEBUGGING
+                                    Log.Debug("TouchEventManager", "Tap Event Found. itemCollider: {0}, callback: {1}, SortingLayer: {2}, isTapInside: {3} ",hitTransform, tapEventData.TapCallback, tapEventData.SortingLayer, tapEventData.IsInside);
+                                    #endif
                                 }
                                 else
                                 {
