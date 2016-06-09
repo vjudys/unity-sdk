@@ -854,6 +854,7 @@ namespace IBM.Watson.DeveloperCloud.Utilities
                         EventSystem.current.RaycastAll (pointerEventForTap, raycastResultListFor2DEventSystem);
                         foreach (RaycastResult itemRaycastResult in raycastResultListFor2DEventSystem)
                         {
+
                             LayerMask layerMaskOfItem = 1 << itemRaycastResult.gameObject.layer;
                             isHitOnLayer2DEventSystem = ((layerMaskOfItem.value & kp.Key) == layerMaskOfItem.value);
                             if (isHitOnLayer2DEventSystem)
@@ -1038,7 +1039,7 @@ namespace IBM.Watson.DeveloperCloud.Utilities
 
                         }
 
-                        //2d Hit Check using EventSystem
+                        //2D UI Hit Check using EventSystem
                         if (tapEventData.RectTransform != null)
                         {
                             if (isHitOnLayer2DEventSystem && hitTransform2DEventSystem == tapEventData.RectTransform.transform && tapEventData.IsInside)
