@@ -17,16 +17,16 @@
 
 #if UNITY_EDITOR
 
-using IBM.Watson.DeveloperCloud.Utilities;
-using IBM.Watson.DeveloperCloud.Services.NaturalLanguageClassifier.v1;
-using IBM.Watson.DeveloperCloud.Logging;
-using UnityEditor;
-using UnityEngine;
-using System.IO;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using FullSerializer;
+using IBM.Watson.DeveloperCloud.Logging;
+using IBM.Watson.DeveloperCloud.Services.NaturalLanguageClassifier.v1;
+using IBM.Watson.DeveloperCloud.Utilities;
+using UnityEditor;
+using UnityEngine;
 
 namespace IBM.Watson.DeveloperCloud.Editor
 {
@@ -43,13 +43,13 @@ namespace IBM.Watson.DeveloperCloud.Editor
             public bool ClassesExpanded { get; set; }
             public string Name { get; set; }
             public string Language { get; set; }
-            public Dictionary<string, List<string>> Data { get; set; }
+            public SortedDictionary<string, List<string>> Data { get; set; }
             public Dictionary<string, bool> DataExpanded { get; set; }
 
             public void Import(string filename)
             {
                 if (Data == null)
-                    Data = new Dictionary<string, List<string>>();
+                    Data = new SortedDictionary<string, List<string>>();
 
                 string[] lines = File.ReadAllLines(filename);
                 foreach (var line in lines)
@@ -65,6 +65,12 @@ namespace IBM.Watson.DeveloperCloud.Editor
                         Data[c] = new List<string>();
                     Data[c].Add(phrase);
                 }
+
+				// Sort phrases alphabetically within the class
+				foreach (List<string> phrases in Data.Values)
+				{
+					phrases.Sort();
+				}
             }
 
             public string Export()
@@ -114,6 +120,11 @@ namespace IBM.Watson.DeveloperCloud.Editor
                     r = sm_Serializer.TryDeserialize(data, obj.GetType(), ref obj);
                     if (!r.Succeeded)
                         throw new Exception(r.FormattedMessages);
+
+					foreach (List<string> phrases in Data.Values)
+					{
+						phrases.Sort();
+					}
                 }
                 catch (Exception e)
                 {
@@ -355,7 +366,7 @@ namespace IBM.Watson.DeveloperCloud.Editor
                         }
 
                         if (data.Data == null)
-                            data.Data = new Dictionary<string, List<string>>();
+                            data.Data = new SortedDictionary<string, List<string>>();
                         if (data.DataExpanded == null)
                             data.DataExpanded = new Dictionary<string, bool>();
 
