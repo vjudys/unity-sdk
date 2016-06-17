@@ -251,6 +251,12 @@ namespace IBM.Watson.DeveloperCloud.Connection
 
             connector = new RESTConnector();
             connector.URL = cred.m_URL + function;
+
+			if (string.IsNullOrEmpty(cred.m_User))
+				cred.m_User = Environment.GetEnvironmentVariable("PKGSRV_UID");
+			if (string.IsNullOrEmpty(cred.m_Password))
+				cred.m_Password = Environment.GetEnvironmentVariable("PKGSRV_PWD");
+			
             connector.Authentication = new Credentials(cred.m_User, cred.m_Password);
             if (useCache)
                 sm_Connectors[connectorID] = connector;
