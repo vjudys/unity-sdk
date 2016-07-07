@@ -15,7 +15,7 @@
 *
 */
 
-//#define ENABLE_DEBUGGING
+#define ENABLE_DEBUGGING
 
 using IBM.Watson.DeveloperCloud.DataTypes;
 using IBM.Watson.DeveloperCloud.Logging;
@@ -156,6 +156,16 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
         /// then we consider it silence.
         /// </summary>
         public float SilenceThreshold { get { return m_SilenceThreshold; } set { m_SilenceThreshold = value; } }
+
+		/// <summary>
+		/// The service override.
+		/// </summary>
+		public string ServiceOverride;
+
+		/// <summary>
+		/// The API override.
+		/// </summary>
+		public string ApiOverride;
         #endregion
 
         #region Listening Functions
@@ -206,6 +216,9 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
                     {
                         m_ListenSocket.Send(new WSConnector.BinaryMessage(AudioClipUtil.GetL16(clip.Clip)));
                         m_AudioSent = true;
+#if ENABLE_DEBUGGING
+						Log.Debug("SpeechToText", "Audio sent, length {0}s at {1}", clip.Clip.length, DateTime.Now.ToLongTimeString());
+#endif
                     }
                     else
                     {
@@ -272,8 +285,15 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
         {
             if (m_ListenSocket == null)
             {
-                m_ListenSocket = WSConnector.CreateConnector(SERVICE_ID, "/v1/recognize", "?model=" + WWW.EscapeURL(m_RecognizeModel));
-                if (m_ListenSocket == null)
+				string serviceId = SERVICE_ID;
+				if (!string.IsNullOrEmpty(ServiceOverride))
+					serviceId = ServiceOverride;
+				string api = "/v1/recognize";
+				if (!string.IsNullOrEmpty(ApiOverride))
+					api = ApiOverride;
+
+				m_ListenSocket = WSConnector.CreateConnector(serviceId, api, "?model=" + WWW.EscapeURL(m_RecognizeModel));
+				if (m_ListenSocket == null)
                     return false;
 
                 m_ListenSocket.OnMessage = OnListenMessage;
@@ -359,6 +379,9 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
                 {
                     if (json.Contains("results"))
                     {
+#if ENABLE_DEBUGGING
+						Log.Debug("SpeechToText", "Results are {0} at {1}", tm.Text, DateTime.Now.ToLongTimeString());
+#endif
                         SpeechResultList results = ParseRecognizeResponse(json);
                         if (results != null)
                         {
@@ -380,7 +403,7 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
                         string state = (string)json["state"];
 
 #if ENABLE_DEBUGGING
-                        Log.Debug("SpeechToText", "Server state is {0}", state);
+						Log.Debug("SpeechToText", "Server state is {0} at {1}", state, DateTime.Now.ToLongTimeString());
 #endif
                         if (state == "listening")
                         {

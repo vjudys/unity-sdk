@@ -70,6 +70,12 @@ namespace IBM.Watson.DeveloperCloud.Widgets
         #endregion
 
         #region Public Properties
+		[Tooltip("A name of the service to use instead of default SpeechToTextV1")]
+		public string ServiceOverride;
+
+		[Tooltip("An API to use instead of the standard one")]
+		public string ApiOverride;
+
         /// <summary>
         /// This property starts or stop's this widget listening for speech.
         /// </summary>
@@ -88,6 +94,8 @@ namespace IBM.Watson.DeveloperCloud.Widgets
                     m_SpeechToText.EnableInterimResults = m_EnableInterimResults;
 	                m_SpeechToText.OnError = OnError;
 	                m_SpeechToText.StartListening( OnRecognize );
+					m_SpeechToText.ServiceOverride = ServiceOverride;
+					m_SpeechToText.ApiOverride = ApiOverride;
 	                if ( m_StatusText != null )
 	                    m_StatusText.text = "LISTENING";
                 }
