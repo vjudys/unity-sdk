@@ -15,7 +15,7 @@
 *
 */
 
-#define ENABLE_DEBUGGING
+//#define ENABLE_DEBUGGING
 
 using IBM.Watson.DeveloperCloud.DataTypes;
 using IBM.Watson.DeveloperCloud.Logging;
@@ -285,6 +285,7 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
         {
             if (m_ListenSocket == null)
             {
+				// Override standard service ID and API with XRay specific
 				string serviceId = SERVICE_ID;
 				if (!string.IsNullOrEmpty(ServiceOverride))
 					serviceId = ServiceOverride;
