@@ -25,7 +25,24 @@ namespace IBM.Watson.DeveloperCloud.Utilities
     /// </summary>
     public class Credentials
     {
-        /// <summary>
+		public enum Authorization
+		{
+			BASIC = 0,
+			BEARER_TOKEN
+		};
+
+		/// <summary>
+		/// Gets or sets the type of the authorization.
+		/// </summary>
+		/// <value>The type of the authorization.</value>
+		public Authorization AuthorizationType 
+		{
+			get { return m_authType; }
+			set { m_authType = value; }
+		}
+		private Authorization m_authType = Authorization.BASIC;
+
+		/// <summary>
         /// Default constructor.
         /// </summary>
         public Credentials()
@@ -40,6 +57,15 @@ namespace IBM.Watson.DeveloperCloud.Utilities
             User = user;
             Password = password;
         }
+		/// <summary>
+		/// Creates credentials with bearer token, instead of user name and password.
+		/// </summary>
+		/// <param name="bearerToken">Bearer token.</param>
+		public Credentials(byte[] bearerToken)
+		{
+			AuthorizationType = Authorization.BEARER_TOKEN;
+			BearerToken = bearerToken;
+		}
 
         /// <summary>
         /// The user name.
@@ -49,6 +75,11 @@ namespace IBM.Watson.DeveloperCloud.Utilities
         /// The password.
         /// </summary>
         public string Password { get; set; }
+		/// <summary>
+		/// Gets or sets the bearer token.
+		/// </summary>
+		/// <value>The bearer token.</value>
+		public byte[] BearerToken { get; set; }
 
         /// <summary>
         /// Create basic authentication header data for REST requests.
@@ -56,7 +87,10 @@ namespace IBM.Watson.DeveloperCloud.Utilities
         /// <returns>The authentication data base64 encoded.</returns>
         public string CreateAuthorization()
         {
-            return "Basic " + Convert.ToBase64String(Encoding.ASCII.GetBytes(User + ":" + Password));
+			if (AuthorizationType == Authorization.BEARER_TOKEN)
+				return "Bearer " + BearerToken;
+			else
+				return "Basic " + Convert.ToBase64String(Encoding.ASCII.GetBytes(User + ":" + Password));
         }
     };
 }

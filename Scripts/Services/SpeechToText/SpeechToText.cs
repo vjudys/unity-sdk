@@ -15,7 +15,7 @@
 *
 */
 
-//#define ENABLE_DEBUGGING
+#define ENABLE_DEBUGGING
 
 using IBM.Watson.DeveloperCloud.DataTypes;
 using IBM.Watson.DeveloperCloud.Logging;
@@ -41,6 +41,7 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
         /// This ID is used to match up a configuration record with this service.
         /// </summary>
         private const string SERVICE_ID = "SpeechToTextV1";
+		private static readonly byte[] BEARER_TOKEN = Encoding.ASCII.GetBytes("eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsIng1dCI6Ik1uQ19WWmNBVGZNNXBPWWlKSE1iYTlnb0VLWSIsImtpZCI6Ik1uQ19WWmNBVGZNNXBPWWlKSE1iYTlnb0VLWSJ9.eyJhdWQiOiJodHRwczovL3dvb2RzaWRlZW5lcmd5Lm9ubWljcm9zb2Z0LmNvbS93aWxsb3ctYXBpIiwiaXNzIjoiaHR0cHM6Ly9zdHMud2luZG93cy5uZXQvYTMyOTliYmEtYWRlNi00OTY1LWIwMTEtYmFkYThkMWQ5NTU4LyIsImlhdCI6MTQ2ODI0NDYwMSwibmJmIjoxNDY4MjQ0NjAxLCJleHAiOjE0NjgyNDg1MDEsImFjciI6IjEiLCJhbXIiOlsicHdkIl0sImFwcGlkIjoiMDYwZjJiZjItZTM0Ny00ODg5LTlhZmUtOTEwNzA4Y2E3ZmJkIiwiYXBwaWRhY3IiOiIwIiwiaXBhZGRyIjoiMTI1LjE2LjE2Ny41NiIsIm5hbWUiOiJUU1RRM1QiLCJvaWQiOiIyMWEzNDYxZC1kZjZiLTRiN2QtYTA1Yi03NzU1ZTEzMDI1OGUiLCJvbnByZW1fc2lkIjoiUy0xLTUtMjEtMzQ5OTkzMDEtMTQ1NjYzNDMwNS0xNTkwMTEwNjY0LTE5NzkwMyIsInNjcCI6InVzZXJfaW1wZXJzb25hdGlvbiIsInN1YiI6Il8zVml4SHdWTHBVbjBTcjB2OGxVTTRXWTlBZkNCaThXRUFxUnA5UXBmTkUiLCJ0aWQiOiJhMzI5OWJiYS1hZGU2LTQ5NjUtYjAxMS1iYWRhOGQxZDk1NTgiLCJ1bmlxdWVfbmFtZSI6IlRTVFEzVEB3b29kc2lkZS5jb20uYXUiLCJ1cG4iOiJUU1RRM1RAd29vZHNpZGUuY29tLmF1IiwidmVyIjoiMS4wIn0.sUJAGaNxQQkvpmjd-CLM2Xc80Rqyd03AHOxghjFRo9OUKV42LGWe4mS_FAhfJqa3BR8hW5t0wpXXERaJnBGun1vFi6m43UblQLGccAad-hoSAhOINxrCMWdPNrLniohR0RAXUf6JqCx3DyX6lQ9gEUomAJG_O925_VSjX1ROuluVBmqjKvpwbFPXMA5nJBu5Qu78F1yFksDqkMSAetfW6T_9r9pCOdMWP0-dsaJQaJi6lKPTQaZggD73mS80yZCrFSCLXmg224F3C0Tka8fH5gSybC4FjZzWVi33b6f1A9JBqp43KvQirW0-UGxx6yP6aye7DNaLePIH9YuL0ppgpg");
         /// <summary>
         /// How often to send a message to the web socket to keep it alive.
         /// </summary>
@@ -297,6 +298,13 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
 				if (m_ListenSocket == null)
                     return false;
 
+				// Change the authentication to use Bearer token
+				m_ListenSocket.Authentication = new Credentials(BEARER_TOKEN);
+
+#if ENABLE_DEBUGGING
+				Log.Status("SpeechToText", "Socket created. State={0}", m_ListenSocket.State);
+#endif
+				
                 m_ListenSocket.OnMessage = OnListenMessage;
                 m_ListenSocket.OnClose = OnListenClosed;
             }
@@ -310,6 +318,9 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
             {
                 m_ListenSocket.Close();
                 m_ListenSocket = null;
+#if ENABLE_DEBUGGING
+				Log.Status("SpeechToText", "Socket closed");
+#endif
             }
         }
 
@@ -570,6 +581,7 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
         /// <returns></returns>
         public bool Recognize(AudioClip clip, OnRecognize callback)
         {
+#if USE_REST
             if (clip == null)
                 throw new ArgumentNullException("clip");
             if (callback == null)
@@ -598,6 +610,9 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
             req.OnResponse = OnRecognizeResponse;
 
             return connector.Send(req);
+#else
+			return true;
+#endif
         }
 
         private class RecognizeRequest : RESTConnector.Request

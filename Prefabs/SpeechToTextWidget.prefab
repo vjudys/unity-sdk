@@ -52,7 +52,7 @@ MonoBehaviour:
   m_EnableInterimResults: 1
   m_Transcript: {fileID: 0}
   m_Language: en-US
-  ServiceOverride: XrayV1
+  ServiceOverride: XRayWebSocketV1
   ApiOverride: /v1/recognize
 --- !u!1001 &100100000
 Prefab:
