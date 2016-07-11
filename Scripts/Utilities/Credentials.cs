@@ -47,16 +47,7 @@ namespace IBM.Watson.DeveloperCloud.Utilities
         /// </summary>
         public Credentials()
         { }
-        /// <summary>
-        /// Constructor that takes the user name and password.
-        /// </summary>
-        /// <param name="user">The string containing the user name.</param>
-        /// <param name="password">A string containing the password.</param>
-        public Credentials(string user, string password)
-        {
-            User = user;
-            Password = password;
-        }
+
 		/// <summary>
 		/// Creates credentials with bearer token, instead of user name and password.
 		/// </summary>
@@ -68,6 +59,17 @@ namespace IBM.Watson.DeveloperCloud.Utilities
 		}
 
         /// <summary>
+        /// Constructor that takes the user name and password.
+        /// </summary>
+        /// <param name="user">The string containing the user name.</param>
+        /// <param name="password">A string containing the password.</param>
+        public Credentials(string user, string password)
+        {
+            User = user;
+            Password = password;
+        }
+
+		/// <summary>
         /// The user name.
         /// </summary>
         public string User { get; set; }
