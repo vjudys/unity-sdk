@@ -27,8 +27,8 @@ namespace IBM.Watson.DeveloperCloud.Utilities
     {
 		public enum Authorization
 		{
-			BASIC = 0,
-			BEARER_TOKEN
+			Basic = 0,
+			BearerToken
 		};
 
 		/// <summary>
@@ -40,7 +40,7 @@ namespace IBM.Watson.DeveloperCloud.Utilities
 			get { return m_authType; }
 			set { m_authType = value; }
 		}
-		private Authorization m_authType = Authorization.BASIC;
+		private Authorization m_authType = Authorization.Basic;
 
 		/// <summary>
         /// Default constructor.
@@ -61,10 +61,10 @@ namespace IBM.Watson.DeveloperCloud.Utilities
 		/// Creates credentials with bearer token, instead of user name and password.
 		/// </summary>
 		/// <param name="bearerToken">Bearer token.</param>
-		public Credentials(byte[] bearerToken)
+		public Credentials(string bearerToken)
 		{
-			AuthorizationType = Authorization.BEARER_TOKEN;
-			BearerToken = bearerToken;
+			AuthorizationType = Authorization.BearerToken;
+			Token = bearerToken;
 		}
 
         /// <summary>
@@ -79,7 +79,7 @@ namespace IBM.Watson.DeveloperCloud.Utilities
 		/// Gets or sets the bearer token.
 		/// </summary>
 		/// <value>The bearer token.</value>
-		public byte[] BearerToken { get; set; }
+		public string Token { get; set; }
 
         /// <summary>
         /// Create basic authentication header data for REST requests.
@@ -87,8 +87,8 @@ namespace IBM.Watson.DeveloperCloud.Utilities
         /// <returns>The authentication data base64 encoded.</returns>
         public string CreateAuthorization()
         {
-			if (AuthorizationType == Authorization.BEARER_TOKEN)
-				return "Bearer " + BearerToken;
+			if (AuthorizationType == Authorization.BearerToken)
+				return "Bearer " + Token;
 			else
 				return "Basic " + Convert.ToBase64String(Encoding.ASCII.GetBytes(User + ":" + Password));
         }

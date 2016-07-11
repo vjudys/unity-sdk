@@ -57,10 +57,15 @@ namespace WebSocketSharp.Net
 
     #region Internal Constructors
 
-    internal AuthenticationResponse (NetworkCredential credentials)
+	internal AuthenticationResponse (NetworkCredential credentials)
       : this (AuthenticationSchemes.Basic, new NameValueCollection (), credentials, 0)
     {
     }
+
+		internal AuthenticationResponse(NetworkCredential credentials, bool useBearerToken)
+			: this(AuthenticationSchemes.BearerToken, new NameValueCollection(), credentials, 0)
+		{
+		}
 
     internal AuthenticationResponse (
       AuthenticationChallenge challenge, NetworkCredential credentials, uint nonceCount)
@@ -75,13 +80,30 @@ namespace WebSocketSharp.Net
       uint nonceCount)
       : base (scheme, parameters)
     {
-      Parameters["username"] = credentials.UserName;
-      Parameters["password"] = credentials.Password;
-      Parameters["uri"] = credentials.Domain;
-      _nonceCount = nonceCount;
-      if (scheme == AuthenticationSchemes.Digest)
-        initAsDigest ();
+			Init(scheme, credentials, nonceCount);
     }
+
+		private void Init(
+			AuthenticationSchemes scheme,
+			NetworkCredential credentials,
+			uint nonceCount)
+		{
+			if (scheme == AuthenticationSchemes.BearerToken)
+			{
+				Parameters ["bearerToken"] = credentials.BearerToken;
+				Parameters ["uri"] = credentials.Domain;
+				_nonceCount = nonceCount;
+			}
+			else
+			{
+				Parameters ["username"] = credentials.UserName;
+				Parameters ["password"] = credentials.Password;
+				Parameters ["uri"] = credentials.Domain;
+				_nonceCount = nonceCount;
+				if (scheme == AuthenticationSchemes.Digest)
+					initAsDigest();
+			}
+		}
 
     #endregion
 
@@ -303,6 +325,11 @@ namespace WebSocketSharp.Net
 
       return output.ToString ();
     }
+
+	internal override string ToBearerTokenString()
+	{
+		return "Bearer " + Parameters["bearerToken"];
+	}
 
     #endregion
 

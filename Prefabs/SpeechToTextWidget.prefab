@@ -53,7 +53,7 @@ MonoBehaviour:
   m_Transcript: {fileID: 0}
   m_Language: en-US
   ServiceOverride: XRayWebSocketV1
-  ApiOverride: /v1/recognize
+  ApiOverride: /stt-socket
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1

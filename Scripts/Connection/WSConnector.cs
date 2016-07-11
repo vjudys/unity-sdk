@@ -285,7 +285,12 @@ namespace IBM.Watson.DeveloperCloud.Connection
                 if (Headers != null)
                     ws.Headers = Headers;
                 if (Authentication != null)
-                    ws.SetCredentials(Authentication.User, Authentication.Password, true);
+				{
+					if (Authentication.AuthorizationType == Credentials.Authorization.BearerToken)
+						ws.SetCredentials(Authentication.Token, true);
+					else
+                    	ws.SetCredentials(Authentication.User, Authentication.Password, true);
+				}
                 ws.OnOpen += OnWSOpen;
                 ws.OnClose += OnWSClose;
                 ws.OnError += OnWSError;

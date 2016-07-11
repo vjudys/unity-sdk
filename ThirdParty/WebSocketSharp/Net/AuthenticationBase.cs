@@ -133,6 +133,8 @@ namespace WebSocketSharp.Net
 
     internal abstract string ToDigestString ();
 
+	internal abstract string ToBearerTokenString ();
+
     #endregion
 
     #region Public Methods
@@ -143,7 +145,9 @@ namespace WebSocketSharp.Net
              ? ToBasicString ()
              : _scheme == AuthenticationSchemes.Digest
                ? ToDigestString ()
-               : String.Empty;
+               : _scheme == AuthenticationSchemes.BearerToken
+                 ? ToBearerTokenString()
+                 : String.Empty;
     }
 
     #endregion

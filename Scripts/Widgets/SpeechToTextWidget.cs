@@ -93,9 +93,9 @@ namespace IBM.Watson.DeveloperCloud.Widgets
                     m_SpeechToText.EnableContinousRecognition = m_EnableContinous;
                     m_SpeechToText.EnableInterimResults = m_EnableInterimResults;
 	                m_SpeechToText.OnError = OnError;
-	                m_SpeechToText.StartListening( OnRecognize );
 					m_SpeechToText.ServiceOverride = ServiceOverride;
 					m_SpeechToText.ApiOverride = ApiOverride;
+	                m_SpeechToText.StartListening( OnRecognize );
 	                if ( m_StatusText != null )
 	                    m_StatusText.text = "LISTENING";
                 }

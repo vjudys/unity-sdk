@@ -895,7 +895,10 @@ namespace WebSocketSharp
         _nonceCount = authRes.NonceCount;
       }
       else if (_preAuth) {
-        authRes = new AuthenticationResponse (_credentials);
+		if (!string.IsNullOrEmpty(_credentials.BearerToken))
+		  authRes = new AuthenticationResponse (_credentials, true);
+		else
+          authRes = new AuthenticationResponse (_credentials);
       }
 
       if (authRes != null)
@@ -2551,7 +2554,33 @@ namespace WebSocketSharp
       }
     }
 
-    /// <summary>
+		public void SetCredentials (string bearerToken, bool preAuth)
+		{
+			lock (_forConn) {
+				var msg = checkIfAvailable (true, false, true, false, false, true);
+				if (msg == null) {
+					if (string.IsNullOrEmpty(bearerToken)) {
+						_credentials = null;
+						_preAuth = false;
+						_logger.Warn ("The credentials were set back to the default.");
+
+						return;
+					}
+				}
+
+				if (msg != null) {
+					_logger.Error (msg);
+					error ("An error has occurred in setting the credentials.", null);
+
+					return;
+				}
+
+				_credentials = new NetworkCredential (bearerToken);
+				_preAuth = preAuth;
+			}
+		}
+
+		/// <summary>
     /// Sets an HTTP proxy server URL to connect through, and if necessary,
     /// a pair of <paramref name="username"/> and <paramref name="password"/> for
     /// the proxy server authentication (Basic/Digest).

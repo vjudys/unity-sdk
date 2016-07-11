@@ -31,7 +31,7 @@ using System;
 namespace WebSocketSharp.Net
 {
   /// <summary>
-  /// Provides the credentials for HTTP authentication (Basic/Digest).
+  /// Provides the credentials for HTTP authentication (Basic/Digest/Bearer Token).
   /// </summary>
   public class NetworkCredential
   {
@@ -41,10 +41,21 @@ namespace WebSocketSharp.Net
     private string    _password;
     private string [] _roles;
     private string    _username;
+	private string    _bearerToken;
 
     #endregion
 
     #region Public Constructors
+	
+	/// <summary>
+	/// Initializes a new instance of the <see cref="WebSocketSharp.Net.NetworkCredential"/> class
+	/// with bearer token information, instead of user ID and password.
+	/// </summary>
+	/// <param name="bearerToken">Bearer token.</param>
+	public NetworkCredential(string bearerToken)
+	{
+		_bearerToken = bearerToken;
+	}
 
     /// <summary>
     /// Initializes a new instance of the <see cref="NetworkCredential"/> class
@@ -173,6 +184,16 @@ namespace WebSocketSharp.Net
         _username = value;
       }
     }
+
+	public string BearerToken {
+		get {
+			return _bearerToken;
+		}
+
+		internal set {
+			_bearerToken = value;
+		}
+	}
 
     #endregion
   }

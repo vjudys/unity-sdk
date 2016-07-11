@@ -55,6 +55,10 @@ namespace WebSocketSharp.Net
     /// Indicates digest authentication.
     /// </summary>
     Digest = 1,
+	/// <summary>
+	/// Indicates athentication with bearer token
+	/// </summary>
+	BearerToken = 2, // is this value needs to be some specific?
     /// <summary>
     /// Indicates basic authentication.
     /// </summary>

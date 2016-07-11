@@ -141,6 +141,11 @@ namespace WebSocketSharp.Net
       return output.ToString ();
     }
 
+	internal override string ToBearerTokenString()
+	{
+		return "Bearer " + Parameters["bearerToken"];
+	}
+
     #endregion
   }
 }
