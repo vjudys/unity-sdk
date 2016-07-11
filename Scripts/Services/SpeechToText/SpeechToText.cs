@@ -17,16 +17,17 @@
 
 #define ENABLE_DEBUGGING
 
-using IBM.Watson.DeveloperCloud.DataTypes;
-using IBM.Watson.DeveloperCloud.Logging;
-using IBM.Watson.DeveloperCloud.Connection;
-using IBM.Watson.DeveloperCloud.Utilities;
-using MiniJSON;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 using System.Text;
+using IBM.Watson.DeveloperCloud.Connection;
+using IBM.Watson.DeveloperCloud.DataTypes;
+using IBM.Watson.DeveloperCloud.Logging;
+using IBM.Watson.DeveloperCloud.Utilities;
+using IBM.Watson.DeveloperCloud.Widgets.UI;
+using MiniJSON;
+using UnityEngine;
 
 namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
 {
@@ -41,7 +42,6 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
         /// This ID is used to match up a configuration record with this service.
         /// </summary>
         private const string SERVICE_ID = "SpeechToTextV1";
-		private static readonly string BEARER_TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsIng1dCI6Ik1uQ19WWmNBVGZNNXBPWWlKSE1iYTlnb0VLWSIsImtpZCI6Ik1uQ19WWmNBVGZNNXBPWWlKSE1iYTlnb0VLWSJ9.eyJhdWQiOiJodHRwczovL3dvb2RzaWRlZW5lcmd5Lm9ubWljcm9zb2Z0LmNvbS93aWxsb3ctYXBpIiwiaXNzIjoiaHR0cHM6Ly9zdHMud2luZG93cy5uZXQvYTMyOTliYmEtYWRlNi00OTY1LWIwMTEtYmFkYThkMWQ5NTU4LyIsImlhdCI6MTQ2ODI3MjE0NywibmJmIjoxNDY4MjcyMTQ3LCJleHAiOjE0NjgyNzYwNDcsImFjciI6IjEiLCJhbXIiOlsicHdkIl0sImFwcGlkIjoiMDYwZjJiZjItZTM0Ny00ODg5LTlhZmUtOTEwNzA4Y2E3ZmJkIiwiYXBwaWRhY3IiOiIwIiwiZmFtaWx5X25hbWUiOiJKVURZUyIsImdpdmVuX25hbWUiOiJWTEFEIiwiaXBhZGRyIjoiMTcyLjExLjEyNS4xNjUiLCJuYW1lIjoiSnVkeXMsIFZsYWQiLCJvaWQiOiJiYjY4ODk3ZS1mYmRhLTQ3MWQtYTJhNC1jM2I2ZmUxYjI4ZmQiLCJvbnByZW1fc2lkIjoiUy0xLTUtMjEtMzQ5OTkzMDEtMTQ1NjYzNDMwNS0xNTkwMTEwNjY0LTQ0NDI0MyIsInNjcCI6InVzZXJfaW1wZXJzb25hdGlvbiIsInN1YiI6Imtnc0xwUUw5alI5b2s3U1pfVlNHWmk1cFdXX0NyS0djVXgzcFhFRDl0UkEiLCJ0aWQiOiJhMzI5OWJiYS1hZGU2LTQ5NjUtYjAxMS1iYWRhOGQxZDk1NTgiLCJ1bmlxdWVfbmFtZSI6InZsYWQuanVkeXNAd29vZHNpZGUuY29tLmF1IiwidXBuIjoidmxhZC5qdWR5c0B3b29kc2lkZS5jb20uYXUiLCJ2ZXIiOiIxLjAifQ.FHL-6wCWoXFMNW_gWjaR5DsI2yFOi1fP2_ZJYSOIsu9PRHFK2LTYG92YdTzssXFJjV3HD5d21Fj4zoAquhk_bvPIHh4Bmkc8I73eaFw1mYsSN0zxJXtrC0HjkvaZaAA2XmO6-Uk6EFj4EBFu7CyvKcMZCJMgLIkv68_AtnJ3SRAAPVFxpeQPxh67HXN_jBPIHjRvqC55vgtNwFSf67NPtqogNbT364GFC7HIu34UEhrGgiBYdeMxs8RfimDpQhlUzR0_DxKRycxbSqs61IfayTluBov-r4glGCSRrzscIS-plQ5TVOXIbFYGWcu1qJak-lZ6PWsPA46sI4B0tHTSnA";
 		/// <summary>
         /// How often to send a message to the web socket to keep it alive.
         /// </summary>
@@ -299,7 +299,11 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
                     return false;
 
 				// Change the authentication to use Bearer token
-				m_ListenSocket.Authentication = new Credentials(BEARER_TOKEN);
+				TokenLogin tokenLoginWidget = GameObject.FindObjectOfType<TokenLogin>();
+				if (tokenLoginWidget != null && !string.IsNullOrEmpty(tokenLoginWidget.AuthToken))
+				{
+					m_ListenSocket.Authentication = new Credentials(tokenLoginWidget.AuthToken);
+				}
 
 #if ENABLE_DEBUGGING
 				Log.Status("SpeechToText", "Socket created.");
