@@ -148,6 +148,19 @@ namespace IBM.Watson.DeveloperCloud.Camera
         void Awake()
         {
             mp_Instance = this;
+
+			// Determine if we are running on the tablet
+			int qualityLevelIndex = QualitySettings.GetQualityLevel();
+			string[] qualityLevelNames = QualitySettings.names;
+			if (qualityLevelIndex < qualityLevelNames.Length && qualityLevelNames [qualityLevelIndex] == "Tablet")
+			{
+				// Remove Depth of Field and Anti-Aliasing effects
+				Destroy(GetComponent<UnityStandardAssets.ImageEffects.DepthOfField>());
+				m_DepthOfField = null;
+
+				Destroy(GetComponent<UnityStandardAssets.ImageEffects.Antialiasing>());
+				m_AntiAliasing = null;
+			}
         }
 
         void Start()
