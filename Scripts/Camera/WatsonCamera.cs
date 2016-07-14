@@ -154,12 +154,9 @@ namespace IBM.Watson.DeveloperCloud.Camera
 			string[] qualityLevelNames = QualitySettings.names;
 			if (qualityLevelIndex < qualityLevelNames.Length && qualityLevelNames [qualityLevelIndex] == "Tablet")
 			{
-				// Remove Depth of Field and Anti-Aliasing effects
+				// Remove Depth of Field effect
 				Destroy(GetComponent<UnityStandardAssets.ImageEffects.DepthOfField>());
 				m_DepthOfField = null;
-
-				Destroy(GetComponent<UnityStandardAssets.ImageEffects.Antialiasing>());
-				m_AntiAliasing = null;
 			}
         }
 
