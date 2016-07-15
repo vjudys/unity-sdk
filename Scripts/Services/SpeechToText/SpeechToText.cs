@@ -169,7 +169,7 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
 		public string ApiOverride;
         #endregion
 
-        #region Listening Functions
+        #region ListenConnector Start/Stop Functions
 
         /// <summary>
         /// This starts the service listening and it will invoke the callback for any recognized speech.
@@ -193,68 +193,6 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
             m_LastKeepAlive = DateTime.Now;
 
             return true;
-        }
-
-        /// <summary>
-        /// This function should be invoked with the AudioData input after StartListening() method has been invoked.
-        /// The user should continue to invoke this function until they are ready to call StopListening(), typically
-        /// microphone input is sent to this function.
-        /// </summary>
-        /// <param name="clip">A AudioData object containing the AudioClip and max level found in the clip.</param>
-        public void OnListen(AudioData clip)
-        {
-            if (m_IsListening)
-            {
-                if (m_RecordingHZ < 0)
-                {
-                    m_RecordingHZ = clip.Clip.frequency;
-                    SendStart();
-                }
-
-                if (!DetectSilence || clip.MaxLevel >= m_SilenceThreshold)
-                {
-                    if (m_ListenActive)
-                    {
-                        m_ListenSocket.Send(new WSConnector.BinaryMessage(AudioClipUtil.GetL16(clip.Clip)));
-                        m_AudioSent = true;
-#if ENABLE_DEBUGGING
-						Log.Debug("SpeechToText", "Audio sent, length {0}s at {1}", clip.Clip.length, DateTime.Now.ToLongTimeString());
-#endif
-                    }
-                    else
-                    {
-                        // we have not received the "listening" state yet from the server, so just queue
-                        // the audio clips until that happens.
-                        m_ListenRecordings.Enqueue(clip);
-
-                        // check the length of this queue and do something if it gets too full.
-                        if (m_ListenRecordings.Count > MAX_QUEUED_RECORDINGS)
-                        {
-                            Log.Error("SpeechToText", "Recording queue is full.");
-
-                            StopListening();
-                            if (OnError != null)
-                                OnError("Recording queue is full.");
-                        }
-                    }
-                }
-                else if (m_AudioSent)
-                {
-                    SendStop();
-                    m_AudioSent = false;
-                }
-
-                // After sending start, we should get into the listening state within the amount of time specified
-                // by LISTEN_TIMEOUT. If not, then stop listening and record the error.
-                if (!m_ListenActive && (DateTime.Now - m_LastStartSent).TotalSeconds > LISTEN_TIMEOUT)
-                {
-                    Log.Error("SpeechToText", "Failed to enter listening state.");
-
-                    StopListening();
-                    if (OnError != null)
-                        OnError("Failed to enter listening state.");
-                }
-            }
         }
 
         /// <summary>
@@ -343,6 +281,7 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
             start["timestamps"] = m_Timestamps;
 
             m_ListenSocket.Send(new WSConnector.TextMessage(Json.Serialize(start)));
+			Log.Warning("SpeechToText", "START sent");
             m_LastStartSent = DateTime.Now;
         }
 
@@ -357,8 +296,11 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
                 stop["action"] = "stop";
 
                 m_ListenSocket.Send(new WSConnector.TextMessage(Json.Serialize(stop)));
+				Log.Warning("SpeechToText", "STOP sent");
                 m_LastStartSent = DateTime.Now;     // sending stop, will send the listening state again..
+
                 m_ListenActive = false;
+				Log.Warning("SpeechToText", "1) Setting m_ListenActive to {0}.", m_ListenActive);
             }
         }
 
@@ -383,7 +325,74 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
             }
             Log.Debug("SpeechToText", "KeepAlive exited.");
         }
+		#endregion
 
+		#region Input Data Events
+
+		/// <summary>
+		/// This function should be invoked with the AudioData input after StartListening() method has been invoked.
+		/// The user should continue to invoke this function until they are ready to call StopListening(), typically
+		/// microphone input is sent to this function.
+		/// </summary>
+		/// <param name="clip">A AudioData object containing the AudioClip and max level found in the clip.</param>
+		public void OnListen(AudioData clip)
+		{
+			if (m_IsListening)
+			{
+				if (m_RecordingHZ < 0)
+				{
+					m_RecordingHZ = clip.Clip.frequency;
+					SendStart();
+				}
+
+				if (!DetectSilence || clip.MaxLevel >= m_SilenceThreshold)
+				{
+					if (m_ListenActive)
+					{
+						m_ListenSocket.Send(new WSConnector.BinaryMessage(AudioClipUtil.GetL16(clip.Clip)));
+						m_AudioSent = true;
+#if ENABLE_DEBUGGING
+						Log.Debug("SpeechToText", "Audio sent, length {0}s at {1}", clip.Clip.length, DateTime.Now.ToLongTimeString());
+#endif
+					}
+					else
+					{
+						// we have not received the "listening" state yet from the server, so just queue
+						// the audio clips until that happens.
+						m_ListenRecordings.Enqueue(clip);
+
+						// check the length of this queue and do something if it gets too full.
+						if (m_ListenRecordings.Count > MAX_QUEUED_RECORDINGS)
+						{
+							Log.Error("SpeechToText", "Recording queue is full.");
+
+							StopListening();
+							if (OnError != null)
+								OnError("Recording queue is full.");
+						}
+					}
+				}
+				else if (m_AudioSent)
+				{
+					SendStop();
+					m_AudioSent = false;
+				}
+
+				// After sending start, we should get into the listening state within the amount of time specified
+				// by LISTEN_TIMEOUT. If not, then stop listening and record the error.
+				if (!m_ListenActive && (DateTime.Now - m_LastStartSent).TotalSeconds > LISTEN_TIMEOUT)
+				{
+					Log.Error("SpeechToText", "Failed to enter listening state.");
+
+					StopListening();
+					if (OnError != null)
+						OnError("Failed to enter listening state.");
+				}
+			}
+		}
+		#endregion
+
+		#region ListenConnector Messages
         private void OnListenMessage(WSConnector.Message msg)
         {
             if (msg is WSConnector.TextMessage)
@@ -409,7 +418,10 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
                             if (m_ListenCallback != null)
                                 m_ListenCallback(results);
                             else
+							{
+								Log.Error("SpeecToText", "Stopped listening because the callback is NULL.");
                                 StopListening();            // automatically stop listening if our callback is destroyed.
+							}
                         }
                         else
                             Log.Error("SpeechToText", "Failed to parse results: {0}", tm.Text);
@@ -428,6 +440,7 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
                                 if (!m_ListenActive)
                                 {
                                     m_ListenActive = true;
+									Log.Warning("SpeechToText", "2) Setting m_ListenActive to {0}.", m_ListenActive);
 
                                     // send all pending audio clips ..
                                     while (m_ListenRecordings.Count > 0)
@@ -469,6 +482,8 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
 #endif
 
             m_ListenActive = false;
+			Log.Warning("SpeechToText", "3) Setting m_ListenActive to {0}.", m_ListenActive);
+
             StopListening();
 
             if (connector.State == WSConnector.ConnectionState.DISCONNECTED)
@@ -480,6 +495,7 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
 
         #endregion
 
+#if ENABLE_GET_MODEL_FUNCTION
         #region GetModels Functions
         /// <summary>
         /// This function retrieves all the language models that the user may use by setting the RecognizeModel 
@@ -573,7 +589,10 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
             return null;
         }
         #endregion
+#endif
+		
 
+#if ENABLE_RECOGNIZE_FUNCTION
         #region Recognize Functions
         /// <summary>
         /// This function POSTs the given audio clip the recognize function and convert speech into text. This function should be used
@@ -585,7 +604,6 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
         /// <returns></returns>
         public bool Recognize(AudioClip clip, OnRecognize callback)
         {
-#if USE_REST
             if (clip == null)
                 throw new ArgumentNullException("clip");
             if (callback == null)
@@ -614,9 +632,6 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
             req.OnResponse = OnRecognizeResponse;
 
             return connector.Send(req);
-#else
-			return true;
-#endif
         }
 
         private class RecognizeRequest : RESTConnector.Request
@@ -654,7 +669,9 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
             if (recognizeReq.Callback != null)
                 recognizeReq.Callback(result);
         }
-
+		#endregion
+#endif
+		#region Recognize Parse functions
         private SpeechResultList ParseRecognizeResponse(byte[] json)
         {
             string jsonString = Encoding.UTF8.GetString(json);
@@ -779,23 +796,28 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
 
         private class CheckServiceStatus
         {
+#if ENABLE_GET_MODEL_FUNCTION
             private SpeechToText m_Service = null;
-            private ServiceStatus m_Callback = null;
+			private ServiceStatus m_Callback = null;
+#endif
 
             public CheckServiceStatus(SpeechToText service, ServiceStatus callback)
             {
+#if ENABLE_GET_MODEL_FUNCTION
                 m_Service = service;
                 m_Callback = callback;
-
                 if (!m_Service.GetModels(OnCheckService))
                     m_Callback(SERVICE_ID, false);
+#endif
             }
 
             private void OnCheckService(SpeechModel[] models)
             {
+#if ENABLE_GET_MODEL_FUNCTION
                 if (m_Callback != null && m_Callback.Target != null)
                     m_Callback(SERVICE_ID, models != null);
-            }
+#endif
+				}
         };
         #endregion
     }

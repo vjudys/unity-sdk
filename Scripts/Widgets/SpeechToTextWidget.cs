@@ -138,8 +138,10 @@ namespace IBM.Watson.DeveloperCloud.Widgets
 
 	        if ( m_StatusText != null )
 	            m_StatusText.text = "READY";
+#if ENABLE_GET_MODEL_FUNCTION
             if (! m_SpeechToText.GetModels( OnGetModels ) )
                 Log.Error( "SpeechToTextWidget", "Failed to request models." );
+#endif
 	    }
 
         private void OnDisable()
@@ -169,6 +171,7 @@ namespace IBM.Watson.DeveloperCloud.Widgets
             if ( language == null )
                 throw new WatsonException( "Unexpected data type" );
 
+#if ENABLE_GET_MODEL_FUNCTION
             if (! string.IsNullOrEmpty( language.Language ) )
             {
                 m_Language = language.Language;
@@ -176,8 +179,10 @@ namespace IBM.Watson.DeveloperCloud.Widgets
                 if (! m_SpeechToText.GetModels( OnGetModels ) )
                     Log.Error( "SpeechToTextWidget", "Failed to rquest models." );
             }
-        }
+#endif
+		}
 
+#if ENABLE_GET_MODEL_FUNCTION
         private void OnGetModels( SpeechModel [] models )
         {
             if ( models != null )
@@ -199,7 +204,8 @@ namespace IBM.Watson.DeveloperCloud.Widgets
                 }
             }
         }
-
+#endif
+		
 	    private void OnRecognize(SpeechResultList result)
 	    {
             m_ResultOutput.SendData( new SpeechToTextData( result ) );

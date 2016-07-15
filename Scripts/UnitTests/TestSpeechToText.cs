@@ -33,8 +33,10 @@ namespace IBM.Watson.DeveloperCloud.UnitTests
             if (Config.Instance.FindCredentials(m_SpeechToText.GetServiceID()) == null)
                 yield break;
 
+#if ENABLE_GET_MODEL_FUNCTION
             m_SpeechToText.GetModels(OnGetModels);
-
+#endif
+			
             while (!m_GetModelsTested)
                 yield return null;
 

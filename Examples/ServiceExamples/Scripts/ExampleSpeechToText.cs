@@ -1,6 +1,8 @@
 ﻿using UnityEngine;
 using IBM.Watson.DeveloperCloud.Services.SpeechToText.v1;
 
+#pragma warning disable 414
+
 public class ExampleSpeechToText : MonoBehaviour
 {
 	[SerializeField]
@@ -9,7 +11,9 @@ public class ExampleSpeechToText : MonoBehaviour
 
     void Start()
     {
+#if ENABLE_RECOGNIZE_FUNCTION
 		m_SpeechToText.Recognize(m_AudioClip, HandleOnRecognize);
+#endif
     }
 
 	void HandleOnRecognize (SpeechResultList result)
