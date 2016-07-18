@@ -150,6 +150,12 @@ namespace IBM.Watson.DeveloperCloud.Utilities
         /// Returns a list of variables which can hold key/value data.
         /// </summary>
         public List<Variable> Variables { get { return m_Variables; } set { m_Variables = value; } }
+		/// <summary>
+		/// Authentication token obtained from Azure AD
+		/// </summary>
+		/// <value>The auth token.</value>
+		[fsIgnore]
+		public string AuthToken { get; set; }
         #endregion
 
         /// <summary>
