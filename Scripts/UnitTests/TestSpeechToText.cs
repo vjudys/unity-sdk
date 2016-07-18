@@ -21,6 +21,7 @@ using IBM.Watson.DeveloperCloud.Services.SpeechToText.v1;
 using IBM.Watson.DeveloperCloud.Utilities;
 using System.Collections;
 
+#if STT_WATSON_SERVICE
 namespace IBM.Watson.DeveloperCloud.UnitTests
 {
     public class TestSpeechToText : UnitTest
@@ -33,10 +34,8 @@ namespace IBM.Watson.DeveloperCloud.UnitTests
             if (Config.Instance.FindCredentials(m_SpeechToText.GetServiceID()) == null)
                 yield break;
 
-#if ENABLE_GET_MODEL_FUNCTION
             m_SpeechToText.GetModels(OnGetModels);
-#endif
-			
+
             while (!m_GetModelsTested)
                 yield return null;
 
@@ -53,3 +52,4 @@ namespace IBM.Watson.DeveloperCloud.UnitTests
         }
     }
 }
+#endif

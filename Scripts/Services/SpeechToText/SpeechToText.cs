@@ -35,13 +35,24 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
     /// This class wraps the Watson SpeechToText service.
     /// <a href="http://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/speech-to-text.html">SpeechToText Service</a>
     /// </summary>
-    public class SpeechToText : IWatsonService
+    public class SpeechToText 
+#if STT_WATSON_SERVICE
+		: IWatsonService
+#endif
     {
         #region Constants
         /// <summary>
         /// This ID is used to match up a configuration record with this service.
         /// </summary>
         private const string SERVICE_ID = "SpeechToTextV1";
+		/// <summary>
+		/// An API method to retrieve supported models
+		/// </summary>
+		private const string API_MODELS = "/v1/models";
+		/// <summary>
+		/// An API method to retrieve recognized text from provided speech
+		/// </summary>
+		private const string API_RECOGNIZE = "/v1/recognize";
 		/// <summary>
         /// How often to send a message to the web socket to keep it alive.
         /// </summary>
@@ -80,6 +91,9 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
         #endregion
 
         #region Private Data
+		private string m_Service = SERVICE_ID; // The name of STT service
+		private string m_ApiModels = API_MODELS; // The name of Models method
+		private string m_ApiRecognize = API_RECOGNIZE; // The name of Recognize method
         private OnRecognize m_ListenCallback = null;        // Callback is set by StartListening()                                                             
         private WSConnector m_ListenSocket = null;          // WebSocket object used when StartListening() is invoked  
         private bool m_ListenActive = false;
@@ -157,16 +171,6 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
         /// then we consider it silence.
         /// </summary>
         public float SilenceThreshold { get { return m_SilenceThreshold; } set { m_SilenceThreshold = value; } }
-
-		/// <summary>
-		/// The service override.
-		/// </summary>
-		public string ServiceOverride;
-
-		/// <summary>
-		/// The API override.
-		/// </summary>
-		public string ApiOverride;
         #endregion
 
         #region ListenConnector Start/Stop Functions
@@ -178,10 +182,16 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
         /// </summary>
         /// <param name="callback">All recognize results are passed to this callback.</param>
         /// <returns>Returns true on success, false on failure.</returns>
-        public bool StartListening(OnRecognize callback)
+		public bool StartListening(OnRecognize callback, string serviceName = "", string apiRecognize = "", string apiModels = "")
         {
             if (callback == null)
                 throw new ArgumentNullException("callback");
+
+			// Override standard service ID and API with XRay specific
+			m_Service = (!string.IsNullOrEmpty(serviceName)) ? serviceName : SERVICE_ID;
+			m_ApiRecognize = (!string.IsNullOrEmpty(apiRecognize)) ? apiRecognize : API_RECOGNIZE;
+			m_ApiModels = (!string.IsNullOrEmpty(apiModels)) ? apiModels : API_MODELS;
+
             if (m_IsListening)
                 return false;
             if (!CreateListenConnector())
@@ -224,15 +234,7 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
         {
             if (m_ListenSocket == null)
             {
-				// Override standard service ID and API with XRay specific
-				string serviceId = SERVICE_ID;
-				if (!string.IsNullOrEmpty(ServiceOverride))
-					serviceId = ServiceOverride;
-				string api = "/v1/recognize";
-				if (!string.IsNullOrEmpty(ApiOverride))
-					api = ApiOverride;
-
-				m_ListenSocket = WSConnector.CreateConnector(serviceId, api, "?model=" + WWW.EscapeURL(m_RecognizeModel));
+				m_ListenSocket = WSConnector.CreateConnector(m_Service, m_ApiRecognize, "?model=" + WWW.EscapeURL(m_RecognizeModel));
 				if (m_ListenSocket == null)
                     return false;
 
@@ -506,7 +508,6 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
 
         #endregion
 
-#if ENABLE_GET_MODEL_FUNCTION
         #region GetModels Functions
         /// <summary>
         /// This function retrieves all the language models that the user may use by setting the RecognizeModel 
@@ -517,9 +518,15 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
         /// <returns>Returns true if request has been made.</returns>
         public bool GetModels(OnGetModels callback)
         {
-            RESTConnector connector = RESTConnector.GetConnector(SERVICE_ID, "/v1/models");
+			RESTConnector connector = RESTConnector.GetConnector(m_Service, m_ApiModels);
             if (connector == null)
                 return false;
+
+			// Change the authentication to use Bearer token
+			if (!string.IsNullOrEmpty(Config.Instance.AuthToken))
+			{
+				connector.Authentication = new Credentials(Config.Instance.AuthToken);
+			}
 
             GetModelsRequest req = new GetModelsRequest();
             req.Callback = callback;
@@ -600,8 +607,7 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
             return null;
         }
         #endregion
-#endif
-		
+
 
 #if ENABLE_RECOGNIZE_FUNCTION
         #region Recognize Functions
@@ -620,7 +626,7 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
             if (callback == null)
                 throw new ArgumentNullException("callback");
 
-            RESTConnector connector = RESTConnector.GetConnector(SERVICE_ID, "/v1/recognize");
+		RESTConnector connector = RESTConnector.GetConnector(SERVICE_ID, API_RECOGNIZIE);
             if (connector == null)
                 return false;
 
@@ -789,11 +795,12 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
         }
         #endregion
 
+#if STT_WATSON_SERVICE
         #region IWatsonService interface
         /// <exclude />
         public string GetServiceID()
         {
-            return SERVICE_ID;
+			return m_Service;
         }
 
         /// <exclude />
@@ -807,29 +814,24 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
 
         private class CheckServiceStatus
         {
-#if ENABLE_GET_MODEL_FUNCTION
             private SpeechToText m_Service = null;
 			private ServiceStatus m_Callback = null;
-#endif
 
             public CheckServiceStatus(SpeechToText service, ServiceStatus callback)
             {
-#if ENABLE_GET_MODEL_FUNCTION
                 m_Service = service;
                 m_Callback = callback;
                 if (!m_Service.GetModels(OnCheckService))
                     m_Callback(SERVICE_ID, false);
-#endif
             }
 
             private void OnCheckService(SpeechModel[] models)
             {
-#if ENABLE_GET_MODEL_FUNCTION
                 if (m_Callback != null && m_Callback.Target != null)
                     m_Callback(SERVICE_ID, models != null);
-#endif
-				}
+			}
         };
         #endregion
+#endif
     }
 }

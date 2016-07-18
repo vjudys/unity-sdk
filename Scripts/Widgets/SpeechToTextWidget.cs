@@ -71,10 +71,13 @@ namespace IBM.Watson.DeveloperCloud.Widgets
 
         #region Public Properties
 		[Tooltip("A name of the service to use instead of default SpeechToTextV1")]
-		public string ServiceOverride;
+		public string ServiceName;		// "XRayWebSocketV1"
 
-		[Tooltip("An API to use instead of the standard one")]
-		public string ApiOverride;
+		[Tooltip("A name of the method for Recognize API")]
+		public string ApiRecognizeName;	// "/stt-socket"
+
+		[Tooltip("A name of the method for GetModels API")]
+		public string ApiGetModels;
 
         /// <summary>
         /// This property starts or stop's this widget listening for speech.
@@ -93,9 +96,7 @@ namespace IBM.Watson.DeveloperCloud.Widgets
                     m_SpeechToText.EnableContinousRecognition = m_EnableContinous;
                     m_SpeechToText.EnableInterimResults = m_EnableInterimResults;
 	                m_SpeechToText.OnError = OnError;
-					m_SpeechToText.ServiceOverride = ServiceOverride;
-					m_SpeechToText.ApiOverride = ApiOverride;
-	                m_SpeechToText.StartListening( OnRecognize );
+					m_SpeechToText.StartListening(OnRecognize, ServiceName, ApiRecognizeName, ApiGetModels);
 	                if ( m_StatusText != null )
 	                    m_StatusText.text = "LISTENING";
                 }
@@ -138,10 +139,10 @@ namespace IBM.Watson.DeveloperCloud.Widgets
 
 	        if ( m_StatusText != null )
 	            m_StatusText.text = "READY";
-#if ENABLE_GET_MODEL_FUNCTION
-            if (! m_SpeechToText.GetModels( OnGetModels ) )
+
+			// Retrieve service model that best matches our chosen language
+			if (! m_SpeechToText.GetModels( OnGetModels ) )
                 Log.Error( "SpeechToTextWidget", "Failed to request models." );
-#endif
 	    }
 
         private void OnDisable()
@@ -171,7 +172,6 @@ namespace IBM.Watson.DeveloperCloud.Widgets
             if ( language == null )
                 throw new WatsonException( "Unexpected data type" );
 
-#if ENABLE_GET_MODEL_FUNCTION
             if (! string.IsNullOrEmpty( language.Language ) )
             {
                 m_Language = language.Language;
@@ -179,10 +179,8 @@ namespace IBM.Watson.DeveloperCloud.Widgets
                 if (! m_SpeechToText.GetModels( OnGetModels ) )
                     Log.Error( "SpeechToTextWidget", "Failed to rquest models." );
             }
-#endif
 		}
 
-#if ENABLE_GET_MODEL_FUNCTION
         private void OnGetModels( SpeechModel [] models )
         {
             if ( models != null )
@@ -204,8 +202,7 @@ namespace IBM.Watson.DeveloperCloud.Widgets
                 }
             }
         }
-#endif
-		
+
 	    private void OnRecognize(SpeechResultList result)
 	    {
             m_ResultOutput.SendData( new SpeechToTextData( result ) );
