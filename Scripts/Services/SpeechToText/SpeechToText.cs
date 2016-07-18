@@ -15,7 +15,7 @@
 *
 */
 
-#define ENABLE_DEBUGGING
+//#define ENABLE_DEBUGGING
 
 using System;
 using System.Collections;
@@ -237,10 +237,9 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
                     return false;
 
 				// Change the authentication to use Bearer token
-				TokenLogin tokenLoginWidget = GameObject.FindObjectOfType<TokenLogin>();
-				if (tokenLoginWidget != null && !string.IsNullOrEmpty(tokenLoginWidget.AuthToken))
+				if (!string.IsNullOrEmpty(Config.Instance.AuthToken))
 				{
-					m_ListenSocket.Authentication = new Credentials(tokenLoginWidget.AuthToken);
+					m_ListenSocket.Authentication = new Credentials(Config.Instance.AuthToken);
 				}
 
 #if ENABLE_DEBUGGING
@@ -281,8 +280,10 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
             start["timestamps"] = m_Timestamps;
 
             m_ListenSocket.Send(new WSConnector.TextMessage(Json.Serialize(start)));
+#if ENABLE_DEBUGGING
 			Log.Warning("SpeechToText", "START sent");
-            m_LastStartSent = DateTime.Now;
+#endif
+			m_LastStartSent = DateTime.Now;
         }
 
         private void SendStop()
@@ -296,12 +297,16 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
                 stop["action"] = "stop";
 
                 m_ListenSocket.Send(new WSConnector.TextMessage(Json.Serialize(stop)));
+#if ENABLE_DEBUGGING
 				Log.Warning("SpeechToText", "STOP sent");
-                m_LastStartSent = DateTime.Now;     // sending stop, will send the listening state again..
+#endif
+				m_LastStartSent = DateTime.Now;     // sending stop, will send the listening state again..
 
                 m_ListenActive = false;
+#if ENABLE_DEBUGGING
 				Log.Warning("SpeechToText", "1) Setting m_ListenActive to {0}.", m_ListenActive);
-            }
+#endif
+			}
         }
 
         // This keeps the WebSocket connected when we are not sending any data.
@@ -323,7 +328,9 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
                     m_LastKeepAlive = DateTime.Now;
                 }
             }
-            Log.Debug("SpeechToText", "KeepAlive exited.");
+#if ENABLE_DEBUGGING
+			Log.Debug("SpeechToText", "KeepAlive exited.");
+#endif
         }
 		#endregion
 
@@ -352,7 +359,7 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
 						m_ListenSocket.Send(new WSConnector.BinaryMessage(AudioClipUtil.GetL16(clip.Clip)));
 						m_AudioSent = true;
 #if ENABLE_DEBUGGING
-						Log.Debug("SpeechToText", "Audio sent, length {0}s at {1}", clip.Clip.length, DateTime.Now.ToLongTimeString());
+						Log.Debug("SpeechToText", "Audio sent, length={0}s, maxLevel={1} at {2}", clip.Clip.length, clip.MaxLevel, DateTime.Now.ToLongTimeString());
 #endif
 					}
 					else
@@ -440,7 +447,9 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
                                 if (!m_ListenActive)
                                 {
                                     m_ListenActive = true;
+#if ENABLE_DEBUGGING
 									Log.Warning("SpeechToText", "2) Setting m_ListenActive to {0}.", m_ListenActive);
+#endif
 
                                     // send all pending audio clips ..
                                     while (m_ListenRecordings.Count > 0)
@@ -482,7 +491,9 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
 #endif
 
             m_ListenActive = false;
+#if ENABLE_DEBUGGING
 			Log.Warning("SpeechToText", "3) Setting m_ListenActive to {0}.", m_ListenActive);
+#endif
 
             StopListening();
 
