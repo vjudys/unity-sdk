@@ -110,7 +110,7 @@ namespace IBM.Watson.DeveloperCloud.Utilities
             IFF_FORM_CHUNK form = ReadType<IFF_FORM_CHUNK>(reader);
             if (GetID(form.form_id) != "RIFF" || GetID(form.id) != "WAVE")
             {
-                Log.Error("TextToSpeech", "Malformed WAV header: {0} != RIFF || {1} != WAVE", GetID(form.form_id), GetID(form.id));
+				Log.Error("WaveFile", "Malformed WAV header: {0} != RIFF || {1} != WAVE", GetID(form.form_id), GetID(form.id));
                 return null;
             }
 
@@ -137,7 +137,7 @@ namespace IBM.Watson.DeveloperCloud.Utilities
                 {
                     if (!bHeaderFound)
                     {
-                        Log.Error("TextToSpeech", "Failed to find header.");
+						Log.Error("WaveFile", "Failed to find header.");
                         return null;
                     }
                     byte[] waveform = reader.ReadBytes(ChunkLength);
@@ -149,7 +149,7 @@ namespace IBM.Watson.DeveloperCloud.Utilities
                     int bytesps = bps / 8;
                     int samples = waveform.Length / bytesps;
 
-                    Log.Debug("TextToSpeech", "WAV INFO, channels = {0}, bps = {1}, samples = {2}, rate = {3}",
+					Log.Debug("WaveFile", "WAV INFO, channels = {0}, bps = {1}, samples = {2}, rate = {3}",
                         channels, bps, samples, header.sample_rate);
 
                     float[] wf = new float[samples];
@@ -170,7 +170,7 @@ namespace IBM.Watson.DeveloperCloud.Utilities
                     }
                     else
                     {
-                        Log.Error("ParseWAV", "Unspported BPS {0} in WAV data.", bps.ToString());
+						Log.Error("WaveFile", "Unspported BPS {0} in WAV data.", bps.ToString());
                         return null;
                     }
 
@@ -245,7 +245,7 @@ namespace IBM.Watson.DeveloperCloud.Utilities
             }
             else
             {
-                Log.Error("CreateWAV", "Unsupported BPS {0} in WAV data.", bps.ToString());
+				Log.Error("WaveFile", "Unsupported BPS {0} in WAV data.", bps.ToString());
                 return null;
             }
 

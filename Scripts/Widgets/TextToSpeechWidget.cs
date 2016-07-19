@@ -15,13 +15,13 @@
 *
 */
 
+using System.Collections.Generic;
+using IBM.Watson.DeveloperCloud.DataTypes;
+using IBM.Watson.DeveloperCloud.Logging;
+using IBM.Watson.DeveloperCloud.Services.TextToSpeech.v1;
+using IBM.Watson.DeveloperCloud.Utilities;
 using UnityEngine;
 using UnityEngine.UI;
-using IBM.Watson.DeveloperCloud.Services.TextToSpeech.v1;
-using IBM.Watson.DeveloperCloud.Logging;
-using IBM.Watson.DeveloperCloud.DataTypes;
-using System.Collections.Generic;
-using IBM.Watson.DeveloperCloud.Utilities;
 
 #pragma warning disable 414
 
@@ -50,7 +50,7 @@ namespace IBM.Watson.DeveloperCloud.Widgets
         #endregion
 
         #region Private Data
-        TextToSpeech m_TextToSpeech = new TextToSpeech();
+		TextToSpeech m_TextToSpeech = null;
 
         [SerializeField, Tooltip("How often to send level out data in seconds.")]
         private float m_LevelOutInterval = 0.05f;
@@ -98,7 +98,15 @@ namespace IBM.Watson.DeveloperCloud.Widgets
         private Speech m_ActiveSpeech = null;
         #endregion
 
-        #region Public Memebers
+        #region Public Properties
+		[Tooltip("A name of the service to use instead of default SpeechToTextV1")]
+		public string ServiceName;			// "XRayWebSocketV1"
+
+		[Tooltip("A name of the method for Recognize API")]
+		public string ApiSynthesizeName;	// "/tts-service"
+
+		[Tooltip("A name of the method for GetModels API")]
+		public string ApiVoicesName; 		// "/getTTSVoiceModels"
 
         /// <summary>
         /// Gets or sets the voice. Default voice is English, US - Michael
@@ -117,6 +125,20 @@ namespace IBM.Watson.DeveloperCloud.Widgets
         }
 
         #endregion
+
+		#region Widget Interface
+		/// <exclude />
+		protected override string GetName()
+		{
+			return "TextToSpeech";
+		}
+
+		protected override void Awake()
+		{
+			base.Awake();
+			m_TextToSpeech = new TextToSpeech(ServiceName, ApiSynthesizeName, ApiVoicesName);
+		}
+		#endregion
 
         #region Event Handlers
         /// <summary>
@@ -242,13 +264,6 @@ namespace IBM.Watson.DeveloperCloud.Widgets
 
             m_ActiveSpeech = null;
         }
-
-        /// <exclude />
-        protected override string GetName()
-        {
-            return "TextToSpeech";
-        }
         #endregion
     }
-
 }

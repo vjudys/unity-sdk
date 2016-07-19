@@ -237,7 +237,7 @@ namespace IBM.Watson.DeveloperCloud.Utilities
                 }
             }
 
-            return s;
+			return s.Trim();
         }
 
         /// <summary>

@@ -94,6 +94,7 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
 		private string m_Service = SERVICE_ID; // The name of STT service
 		private string m_ApiModels = API_MODELS; // The name of Models method
 		private string m_ApiRecognize = API_RECOGNIZE; // The name of Recognize method
+
         private OnRecognize m_ListenCallback = null;        // Callback is set by StartListening()                                                             
         private WSConnector m_ListenSocket = null;          // WebSocket object used when StartListening() is invoked  
         private bool m_ListenActive = false;
@@ -173,6 +174,19 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
         public float SilenceThreshold { get { return m_SilenceThreshold; } set { m_SilenceThreshold = value; } }
         #endregion
 
+		#region Initialization
+		public SpeechToText(string serviceName = null, string apiRecognize = null, string apiModels = null)
+		{
+			// Override standard service ID and API with XRay specific
+			m_Service = (!string.IsNullOrEmpty(serviceName)) ? serviceName : SERVICE_ID;
+			m_ApiRecognize = (!string.IsNullOrEmpty(apiRecognize)) ? apiRecognize : API_RECOGNIZE;
+			m_ApiModels = (!string.IsNullOrEmpty(apiModels)) ? apiModels : API_MODELS;
+#if ENABLE_DEBUGGING
+			Log.Debug("SpeechToText", "Service created with {0}, {1}, {2}.", m_Service, m_ApiRecognize, m_ApiModels);
+#endif
+		}
+		#endregion
+
         #region ListenConnector Start/Stop Functions
 
         /// <summary>
@@ -182,15 +196,10 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
         /// </summary>
         /// <param name="callback">All recognize results are passed to this callback.</param>
         /// <returns>Returns true on success, false on failure.</returns>
-		public bool StartListening(OnRecognize callback, string serviceName = "", string apiRecognize = "", string apiModels = "")
+		public bool StartListening(OnRecognize callback)
         {
             if (callback == null)
                 throw new ArgumentNullException("callback");
-
-			// Override standard service ID and API with XRay specific
-			m_Service = (!string.IsNullOrEmpty(serviceName)) ? serviceName : SERVICE_ID;
-			m_ApiRecognize = (!string.IsNullOrEmpty(apiRecognize)) ? apiRecognize : API_RECOGNIZE;
-			m_ApiModels = (!string.IsNullOrEmpty(apiModels)) ? apiModels : API_MODELS;
 
             if (m_IsListening)
                 return false;

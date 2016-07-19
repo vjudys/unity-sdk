@@ -52,8 +52,9 @@ MonoBehaviour:
   m_EnableInterimResults: 1
   m_Transcript: {fileID: 0}
   m_Language: en-US
-  ServiceOverride: XRayWebSocketV1
-  ApiOverride: /stt-socket
+  ServiceName: XRayWebSocketV1
+  ApiRecognizeName: /stt-socket
+  ApiGetModels: /getSTTModels
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1

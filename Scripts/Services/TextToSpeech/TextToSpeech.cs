@@ -15,6 +15,8 @@
 *
 */
 
+#define ENABLE_DEBUGGING
+
 using UnityEngine;
 using System.Collections.Generic;
 using IBM.Watson.DeveloperCloud.Connection;
@@ -31,10 +33,21 @@ namespace IBM.Watson.DeveloperCloud.Services.TextToSpeech.v1
     /// This class wraps the TextToSpeech service.
     /// <a href="http://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/text-to-speech.html">TextToSpeech Service</a>
     /// </summary>
-    public class TextToSpeech : IWatsonService
+    public class TextToSpeech 
+#if TTS_WATSON_SERVICE
+		: IWatsonService
+#endif
     {
-        #region Public Types
+		#region Constants
+		/// <summary>
+		/// This ID is used to match up a configuration record with this service.
+		/// </summary>
+		private const string SERVICE_ID = "TextToSpeechV1";
+		private const string API_SINTHESIZE = "/v1/synthesize";
+		private const string API_VOICES = "/v1/voices";
+		#endregion
 
+		#region Public Types
         /// <summary>
         /// This callback is passed into the ToSpeech() method.
         /// </summary>
@@ -45,10 +58,13 @@ namespace IBM.Watson.DeveloperCloud.Services.TextToSpeech.v1
         /// </summary>
         /// <param name="voices">The Voices object.</param>
         public delegate void GetVoicesCallback(Voices voices);
-
         #endregion
 
         #region Private Data
+		private string m_Service = SERVICE_ID; // The name of TTS service
+		private string m_ApiSynthesize = API_SINTHESIZE; // The name of Synthesize method
+		private string m_ApiVoices = API_VOICES; // The name of Voices method
+
         private DataCache m_SpeechCache = null;
         private VoiceType m_Voice = VoiceType.en_US_Michael;
         private AudioFormatType m_AudioFormat = AudioFormatType.WAV;
@@ -73,9 +89,21 @@ namespace IBM.Watson.DeveloperCloud.Services.TextToSpeech.v1
             { AudioFormatType.WAV, "audio/wav" },
             { AudioFormatType.FLAC, "audio/flac" },
         };
-        private const string SERVICE_ID = "TextToSpeechV1";
         private static fsSerializer sm_Serializer = new fsSerializer();
         #endregion
+
+		#region Initialization
+		public TextToSpeech(string serviceName = null, string apiSynthesizeName = null, string apiVoicesName = null)
+		{
+			// Override standard service ID and API with XRay specific
+			m_Service = (!string.IsNullOrEmpty(serviceName)) ? serviceName : SERVICE_ID;
+			m_ApiSynthesize = (!string.IsNullOrEmpty(apiSynthesizeName)) ? apiSynthesizeName : API_SINTHESIZE;
+			m_ApiVoices = (!string.IsNullOrEmpty(apiVoicesName)) ? apiVoicesName : API_VOICES;
+#if ENABLE_DEBUGGING
+			Log.Debug("TextToSpeech", "Service created with {0}, {1}, {2}.", m_Service, m_ApiSynthesize, m_ApiVoices);
+#endif
+		}
+		#endregion
 
         #region Public Properties
         /// <summary>
@@ -114,9 +142,15 @@ namespace IBM.Watson.DeveloperCloud.Services.TextToSpeech.v1
             if (callback == null)
                 throw new ArgumentNullException("callback");
 
-            RESTConnector connector = RESTConnector.GetConnector(SERVICE_ID, "/v1/voices");
+			RESTConnector connector = RESTConnector.GetConnector(m_Service, m_ApiVoices);
             if (connector == null)
                 return false;
+
+			// Change the authentication to use Bearer token
+			if (!string.IsNullOrEmpty(Config.Instance.AuthToken))
+			{
+				connector.Authentication = new Credentials(Config.Instance.AuthToken);
+			}
 
             GetVoicesReq req = new GetVoicesReq();
             req.Callback = callback;
@@ -144,6 +178,9 @@ namespace IBM.Watson.DeveloperCloud.Services.TextToSpeech.v1
                     r = sm_Serializer.TryDeserialize(data, obj.GetType(), ref obj);
                     if (!r.Succeeded)
                         throw new WatsonException(r.FormattedMessages);
+#if ENABLE_DEBUGGING
+					Log.Debug("TextToSpeech", "GetVoices() received {0} voices: {1}.", voices.voices.Length, voices.voices);
+#endif
                 }
                 catch (Exception e)
                 {
@@ -195,6 +232,9 @@ namespace IBM.Watson.DeveloperCloud.Services.TextToSpeech.v1
             }
 
             text = Utility.RemoveTags(text);
+#if ENABLE_DEBUGGING
+			Log.Debug("TextToSpeech", "Synthesizing '{0}'.", text);
+#endif
 
             string textId = Utility.GetMD5(text);
             if (!DisableCache)
@@ -211,12 +251,18 @@ namespace IBM.Watson.DeveloperCloud.Services.TextToSpeech.v1
                 }
             }
 
-            RESTConnector connector = RESTConnector.GetConnector(SERVICE_ID, "/v1/synthesize");
+			RESTConnector connector = RESTConnector.GetConnector(m_Service, m_ApiSynthesize);
             if (connector == null)
             {
                 Log.Error("TextToSpeech", "Failed to get connector.");
                 return false;
             }
+
+			// Change the authentication to use Bearer token
+			if (!string.IsNullOrEmpty(Config.Instance.AuthToken))
+			{
+				connector.Authentication = new Credentials(Config.Instance.AuthToken);
+			}
 
             ToSpeechRequest req = new ToSpeechRequest();
             req.TextId = textId;
@@ -248,7 +294,9 @@ namespace IBM.Watson.DeveloperCloud.Services.TextToSpeech.v1
             if (speechReq == null)
                 throw new WatsonException("Wrong type of request object.");
 
-            //Log.Debug( "TextToSpeech", "Request completed in {0} seconds.", resp.ElapsedTime );
+#if ENABLE_DEBUGGING
+			Log.Debug( "TextToSpeech", "Request completed in {0} seconds.", resp.ElapsedTime );
+#endif
 
             AudioClip clip = resp.Success ? ProcessResponse(speechReq.TextId, resp.Data) : null;
             if (clip == null)
@@ -275,6 +323,7 @@ namespace IBM.Watson.DeveloperCloud.Services.TextToSpeech.v1
         }
         #endregion
 
+#if TTS_WATSON_SERVICE
         #region IWatsonService interface
         /// <exclude />
         public string GetServiceID()
@@ -312,6 +361,6 @@ namespace IBM.Watson.DeveloperCloud.Services.TextToSpeech.v1
             }
         };
         #endregion
+#endif
     }
-
 }

@@ -18,11 +18,11 @@
 //#define ENABLE_DEBUGGING
 
 using IBM.Watson.DeveloperCloud.DataTypes;
-using IBM.Watson.DeveloperCloud.Services.SpeechToText.v1;
 using IBM.Watson.DeveloperCloud.Logging;
+using IBM.Watson.DeveloperCloud.Services.SpeechToText.v1;
+using IBM.Watson.DeveloperCloud.Utilities;
 using UnityEngine;
 using UnityEngine.UI;
-using IBM.Watson.DeveloperCloud.Utilities;
 
 #pragma warning disable 414
 
@@ -46,7 +46,7 @@ namespace IBM.Watson.DeveloperCloud.Widgets
         #endregion
 
 	    #region Private Data
-		private SpeechToText m_SpeechToText = new SpeechToText();
+		private SpeechToText m_SpeechToText = null;
 	    [SerializeField]
 	    private Text m_StatusText = null;
 	    [SerializeField]
@@ -96,7 +96,7 @@ namespace IBM.Watson.DeveloperCloud.Widgets
                     m_SpeechToText.EnableContinousRecognition = m_EnableContinous;
                     m_SpeechToText.EnableInterimResults = m_EnableInterimResults;
 	                m_SpeechToText.OnError = OnError;
-					m_SpeechToText.StartListening(OnRecognize, ServiceName, ApiRecognizeName, ApiGetModels);
+					m_SpeechToText.StartListening(OnRecognize);
 	                if ( m_StatusText != null )
 	                    m_StatusText.text = "LISTENING";
                 }
@@ -116,6 +116,12 @@ namespace IBM.Watson.DeveloperCloud.Widgets
         {
             return "SpeechToText";
         }
+
+		protected override void Awake()
+		{
+			base.Awake();
+			m_SpeechToText = new SpeechToText(ServiceName, ApiRecognizeName, ApiGetModels);
+		}
         #endregion
 
         #region Event handlers
