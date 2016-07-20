@@ -54,7 +54,7 @@ MonoBehaviour:
   m_Language: en-US
   ServiceName: XRayWebSocketV1
   ApiRecognizeName: /stt-socket
-  ApiGetModels: /getSTTModels
+  ApiGetModels: /v1/en/getSTTModels
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1

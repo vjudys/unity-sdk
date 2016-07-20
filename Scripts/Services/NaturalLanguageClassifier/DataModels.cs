@@ -125,5 +125,11 @@ namespace IBM.Watson.DeveloperCloud.Services.NaturalLanguageClassifier.v1
                 return fTop;
             }
         }
+
+		public override string ToString()
+		{
+			return string.Format("[ClassifyResult: classifier_id={0}, text={1}, top_class={2}, topConfidence={3}]", 
+				classifier_id, text, top_class, topConfidence);
+		}
     };
 }

@@ -129,8 +129,8 @@ MonoBehaviour:
   m_Voice: 3
   m_UsePost: 0
   ServiceName: XRayWebSocketV1
-  ApiSynthesizeName: /tts-service
-  ApiVoicesName: /getTTSVoiceModels
+  ApiSynthesizeName: /v1/en/tts-service
+  ApiVoicesName: /v1/en/getTTSVoiceModels
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
