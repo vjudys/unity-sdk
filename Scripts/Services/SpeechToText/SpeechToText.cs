@@ -104,8 +104,12 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
         private int m_KeepAliveRoutine = 0;                      // ID of the keep alive co-routine
         private DateTime m_LastKeepAlive = DateTime.Now;
         private DateTime m_LastStartSent = DateTime.Now;
-        private string m_RecognizeModel = "en-US_BroadbandModel";    // ID of the model to use.
-        private int m_MaxAlternatives = 1;                  // maximum number of alternatives to return.
+        
+		// Speech models supported by the service
+		private SpeechModel[] m_models = null;
+		private string m_RecognizeModel = "en-US_BroadbandModel";    // ID of the model to use.
+        
+		private int m_MaxAlternatives = 1;                  // maximum number of alternatives to return.
         private bool m_Timestamps = false;
         private bool m_WordConfidence = false;
         private bool m_DetectSilence = true;                // If true, then we will try not to record silence.
@@ -126,7 +130,12 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
         /// This delegate is invoked when an error occurs.
         /// </summary>
         public ErrorEvent OnError { get; set; }
-        /// <summary>
+		/// <summary>
+		/// Returns the models supported by this service
+		/// </summary>
+		/// <value>The model.</value>
+		public SpeechModel[] Models { get { return m_models; } }
+		/// <summary>
         /// This property controls which recognize model we use when making recognize requests of the server.
         /// </summary>
         public string RecognizeModel
@@ -555,18 +564,71 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
             if (gmr == null)
                 throw new WatsonException("Unexpected request type.");
 
-            SpeechModel[] models = null;
             if (resp.Success)
             {
-                models = ParseGetModelsResponse(resp.Data);
-                if (models == null)
+#if USE_FULL_PARSE
+                m_models = ParseGetModelsResponse(resp.Data);
+#else
+				m_models = ParseShortGetModelsResponse(resp.Data);
+#endif
+                if (m_models == null)
                     Log.Error("SpeechToText", "Failed to parse GetModels response.");
             }
             if (gmr.Callback != null)
-                gmr.Callback(models);
+                gmr.Callback(m_models);
         }
 
-        private SpeechModel[] ParseGetModelsResponse(byte[] data)
+#if !USE_FULL_PARSE
+		private SpeechModel[] ParseShortGetModelsResponse(byte[] data)
+		{
+			string jsonString = Encoding.UTF8.GetString(data);
+			if (jsonString == null)
+			{
+				Log.Error("SpeechToText", "Failed to get JSON string from response.");
+				return null;
+			}
+
+#if ENABLE_DEBUGGING
+			Log.Debug("SpeechToText", "GetModelsResponse {0}.", jsonString);
+#endif
+			
+			try
+			{
+				List<SpeechModel> models = new List<SpeechModel>();
+
+				IList imodels = (IList)Json.Deserialize(jsonString);
+				if (imodels == null)
+					throw new Exception("Expected IList");
+
+				foreach (var m in imodels)
+				{
+					IDictionary imodel = m as IDictionary;
+					if (imodel == null)
+						throw new Exception("Expected IDictionary");
+
+					SpeechModel model = new SpeechModel();
+					string name = (string)imodel["name"]; 
+					model.Name = name;
+					model.Rate = (long)imodel["rate"];
+					string language = name.Substring(0, name.IndexOf("_"));
+					model.Language = language;
+					model.Description = (string)imodel["description"];
+					model.URL = (string)imodel["url"];
+
+					models.Add(model);
+				}
+
+				return models.ToArray();
+			}
+			catch (Exception e)
+			{
+				Log.Error("SpeechToText", "Caught exception {0} when parsing GetModels() response: {1}", e.ToString(), jsonString);
+			}
+
+			return null;
+		}
+#else
+		private SpeechModel[] ParseGetModelsResponse(byte[] data)
         {
             string jsonString = Encoding.UTF8.GetString(data);
             if (jsonString == null)
@@ -574,6 +636,8 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
                 Log.Error("SpeechToText", "Failed to get JSON string from response.");
                 return null;
             }
+
+			Log.Error("SpeechToText", "GetModelsResponse {0}.", jsonString);
 
             IDictionary json = (IDictionary)Json.Deserialize(jsonString);
             if (json == null)
@@ -615,6 +679,7 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
 
             return null;
         }
+#endif
         #endregion
 
 

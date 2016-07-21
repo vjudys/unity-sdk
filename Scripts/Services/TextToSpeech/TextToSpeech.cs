@@ -18,6 +18,7 @@
 #define ENABLE_DEBUGGING
 
 using UnityEngine;
+using System.Collections;
 using System.Collections.Generic;
 using IBM.Watson.DeveloperCloud.Connection;
 using IBM.Watson.DeveloperCloud.Utilities;
@@ -66,6 +67,10 @@ namespace IBM.Watson.DeveloperCloud.Services.TextToSpeech.v1
 		private string m_ApiVoices = API_VOICES; // The name of Voices method
 
         private DataCache m_SpeechCache = null;
+
+		// A list of voices that is supported by the service
+		private Voices m_voices = new Voices();
+
         private VoiceType m_Voice = VoiceType.en_US_Michael;
         private AudioFormatType m_AudioFormat = AudioFormatType.WAV;
         private Dictionary<VoiceType, string> m_VoiceTypes = new Dictionary<VoiceType, string>()
@@ -89,7 +94,9 @@ namespace IBM.Watson.DeveloperCloud.Services.TextToSpeech.v1
             { AudioFormatType.WAV, "audio/wav" },
             { AudioFormatType.FLAC, "audio/flac" },
         };
+#if USE_FULL_DESERIALIZATION
         private static fsSerializer sm_Serializer = new fsSerializer();
+#endif
         #endregion
 
 		#region Initialization
@@ -129,6 +136,11 @@ namespace IBM.Watson.DeveloperCloud.Services.TextToSpeech.v1
                 }
             }
         }
+		/// <summary>
+		/// Returns all voices supported by this service
+		/// </summary>
+		/// <value>The voices.</value>
+		public Voices Voices { get { return m_voices; } }
         #endregion
 
         #region GetVoices 
@@ -164,33 +176,69 @@ namespace IBM.Watson.DeveloperCloud.Services.TextToSpeech.v1
         };
         private void OnGetVoicesResp(RESTConnector.Request req, RESTConnector.Response resp)
         {
-            Voices voices = new Voices();
             if (resp.Success)
             {
                 try
                 {
-                    fsData data = null;
-                    fsResult r = fsJsonParser.Parse(Encoding.UTF8.GetString(resp.Data), out data);
+					string jsonString = Encoding.UTF8.GetString(resp.Data);
+					if (jsonString == null)
+					{
+						Log.Error("TextToSpeech", "Failed to get JSON string from response.");
+						return;
+					}
+
+#if ENABLE_DEBUGGING
+					Log.Debug("TextToSpeech", "GetModelsResponse {0}.", jsonString);
+#endif
+
+#if USE_FULL_DESERIALIZATION
+					fsData data = null;
+                    fsResult r = fsJsonParser.Parse(jsonString, out data);
                     if (!r.Succeeded)
                         throw new WatsonException(r.FormattedMessages);
 
-                    object obj = voices;
-                    r = sm_Serializer.TryDeserialize(data, obj.GetType(), ref obj);
-                    if (!r.Succeeded)
-                        throw new WatsonException(r.FormattedMessages);
+					object obj = m_voices;
+					r = sm_Serializer.TryDeserialize(data, obj.GetType(), ref obj);
+					if (!r.Succeeded)
+					throw new WatsonException(r.FormattedMessages);
+#else
+					List<Voice> voices = new List<Voice>();
+					IList iVoices = (IList)Json.Deserialize(jsonString);
+					if (iVoices == null)
+						throw new Exception("Expected IList in JSON: " + jsonString);
+
+					foreach (var v in iVoices)
+					{
+						IDictionary iVoice = v as IDictionary;
+						if (iVoice == null)
+							throw new Exception("Expected IDictionary");
+
+						Voice voice = new Voice();
+						voice.name = (string)iVoice["name"];
+						voice.language = (string)iVoice["language"];
+						voice.gender = (string)iVoice["gender"];
+						voice.description = (string)iVoice["description"];
+						voice.url = (string)iVoice["url"];
+
+						voices.Add(voice);
+					}
+
+					m_voices.voices = voices.ToArray();
+#endif
+
 #if ENABLE_DEBUGGING
-					Log.Debug("TextToSpeech", "GetVoices() received {0} voices: {1}.", voices.voices.Length, voices.voices);
+					Log.Debug("TextToSpeech", "GetVoices() received {0} voices: {1}.", m_voices.voices.Length, m_voices.voices);
 #endif
                 }
                 catch (Exception e)
                 {
-                    Log.Error("Natural Language Classifier", "GetVoices Exception: {0}", e.ToString());
+					Log.Error("TextToSpeech", "GetVoices Exception: {0}", e.ToString());
                     resp.Success = false;
                 }
             }
 
             if (((GetVoicesReq)req).Callback != null)
-                ((GetVoicesReq)req).Callback(resp.Success ? voices : null);
+                ((GetVoicesReq)req).Callback(resp.Success ? m_voices : null);
         }
         #endregion
 

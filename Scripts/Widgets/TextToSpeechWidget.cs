@@ -124,6 +124,15 @@ namespace IBM.Watson.DeveloperCloud.Widgets
             }
         }
 
+		public Voices SpeechVoices 
+		{
+			get {
+				if (m_TextToSpeech != null)
+					return m_TextToSpeech.Voices;
+				else
+					return null;
+			}
+		}
         #endregion
 
 		#region Widget Interface
@@ -141,6 +150,12 @@ namespace IBM.Watson.DeveloperCloud.Widgets
 		#endregion
 
         #region Event Handlers
+		public void OnGetVoices(Voices voices)
+		{
+			Log.Status("TextToSpeechWidget", "Got this voices: {0} ", voices.voices);
+
+		}
+
         /// <summary>
         /// Button event handler.
         /// </summary>
@@ -195,6 +210,10 @@ namespace IBM.Watson.DeveloperCloud.Widgets
         {
             base.Start();
             m_Source = GetComponent<AudioSource>();
+
+			// Retrieve service voices
+			if (!m_TextToSpeech.GetVoices(OnGetVoices))
+				Log.Error( "TextToSpeechWidget", "Failed to obtain voices." );
         }
 
         private void Update()

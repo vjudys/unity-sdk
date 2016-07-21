@@ -107,6 +107,11 @@ namespace IBM.Watson.DeveloperCloud.Services.TextToSpeech.v1
         /// The language ID of this voice model.
         /// </summary>
         public string language { get; set; }
+		/// <summary>
+		/// Description of this voice model.
+		/// </summary>
+		/// <value>The description.</value>
+		public string description { get; set; }
         /// <summary>
         /// The gender of the voice model.
         /// </summary>

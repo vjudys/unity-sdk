@@ -79,6 +79,16 @@ namespace IBM.Watson.DeveloperCloud.Widgets
 		[Tooltip("A name of the method for GetModels API")]
 		public string ApiGetModels;
 
+		public SpeechModel[] SpeechModels
+		{
+			get {
+				if (m_SpeechToText != null)
+					return m_SpeechToText.Models;
+				else
+					return null;
+			}
+		}
+
         /// <summary>
         /// This property starts or stop's this widget listening for speech.
         /// </summary>
