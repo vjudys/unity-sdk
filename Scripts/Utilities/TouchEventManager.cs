@@ -16,7 +16,7 @@
 */
 
 // uncomment to enable debugging
-//#define ENABLE_DEBUGGING
+#define ENABLE_DEBUGGING
 
 using UnityEngine;
 using UnityEngine.UI;
@@ -32,14 +32,14 @@ namespace IBM.Watson.DeveloperCloud.Utilities
     /// Touch Event Manager for all touch events. 
     /// Each element can register their touch related functions using this manager. 
     /// </summary>
-	[RequireComponent(typeof(TapGesture))]
+    [RequireComponent(typeof(TapGesture))]
     public class TouchEventManager : MonoBehaviour
     {
 
         /// <summary>
         /// Touch Event Data holds all touch related event data for registering and unregistering events via Touch Event Manager.
         /// </summary>
-		public class TouchEventData
+        public class TouchEventData
         {
             private Collider m_Collider;
             private Collider2D m_Collider2D;
@@ -60,7 +60,7 @@ namespace IBM.Watson.DeveloperCloud.Utilities
             /// <summary>
             /// If it is tap event (or one time action event) we are returning the collider of the event.
             /// </summary>
-			public Collider Collider { get { return m_Collider; } }
+            public Collider Collider { get { return m_Collider; } }
             /// <summary>
             /// Gets the collider2 d.
             /// </summary>
@@ -74,7 +74,7 @@ namespace IBM.Watson.DeveloperCloud.Utilities
             /// <summary>
             /// If there is a drag event (or continues action) we are holding game object and all colliders inside that object
             /// </summary>
-			public Collider[] ColliderList { get { if (m_ColliderList == null && m_Collider != null) m_ColliderList = new Collider[] { m_Collider }; return m_ColliderList; } }
+            public Collider[] ColliderList { get { if (m_ColliderList == null && m_Collider != null) m_ColliderList = new Collider[] { m_Collider }; return m_ColliderList; } }
             /// <summary>
             /// If there is a drag event (or continues action) we are holding game object and all colliders inside that object
             /// </summary>
@@ -100,12 +100,12 @@ namespace IBM.Watson.DeveloperCloud.Utilities
             /// <summary>
             /// Greater sorting layer is higher importance level. 
             /// </summary>
-			public int SortingLayer { get { return m_SortingLayer; } }
+            public int SortingLayer { get { return m_SortingLayer; } }
             /// <summary>
             /// Gets a value indicating whether this instance can drag object.
             /// </summary>
             /// <value><c>true</c> if this instance can drag object; otherwise, <c>false</c>.</value>
-            public bool CanDragObject { get { return GameObjectAttached != null && ((ColliderList != null && ColliderList.Length > 0) || (ColliderList2D != null && ColliderList2D.Length > 0)); } }
+            public bool CanDragObject { get { return GameObjectAttached != null && ((ColliderList != null && ColliderList.Length > 0) || (ColliderList2D != null && ColliderList2D.Length > 0) || (RectTransformList != null && RectTransformList.Length > 0)); } }
 
             /// <summary>
             /// Touch event constructor for Tap Event registration. 
@@ -175,7 +175,7 @@ namespace IBM.Watson.DeveloperCloud.Utilities
             /// <param name="callback">Callback for Drag event. After dragging started, callback will be invoked until drag will be finished</param>
             /// <param name="sortingLayer">Sorting level in order to sort the event listeners</param>
             /// <param name="isInside"></param>
-			public TouchEventData(GameObject gameObject, string callback, int sortingLayer, bool isInside)
+            public TouchEventData(GameObject gameObject, string callback, int sortingLayer, bool isInside)
             {
                 m_GameObject = gameObject;
                 m_ColliderList = null;
@@ -183,7 +183,7 @@ namespace IBM.Watson.DeveloperCloud.Utilities
                 {
                     m_ColliderList = gameObject.GetComponentsInChildren<Collider>();
                     m_Collider2DList = gameObject.GetComponentsInChildren<Collider2D>();
-                    //TODO: Rect Transform
+                    m_RectTransformList = gameObject.GetComponentsInChildren<RectTransform>();
                 }
                 m_dragEventCallback = callback;
                 m_SortingLayer = sortingLayer;
@@ -220,9 +220,20 @@ namespace IBM.Watson.DeveloperCloud.Utilities
                             break;
                         }
                     }
-
                 }
-                //TODO: Add Rect TRansform
+
+                if (!hasTouchedOn && RectTransformList != null)
+                {
+                    foreach (RectTransform itemRectTransform in RectTransformList)
+                    {
+                        if (itemRectTransform.transform == hitTransform)
+                        {
+                            hasTouchedOn = true;
+                            break;
+                        }
+                    }
+                }
+
                 return hasTouchedOn;
             }
 
@@ -231,7 +242,7 @@ namespace IBM.Watson.DeveloperCloud.Utilities
             /// </summary>
             /// <param name="obj">Object to check equality</param>
             /// <returns>True if objects are equal</returns>
-			public override bool Equals(object obj)
+            public override bool Equals(object obj)
             {
                 bool isEqual = false;
                 TouchEventData touchEventData = obj as TouchEventData;
@@ -239,13 +250,13 @@ namespace IBM.Watson.DeveloperCloud.Utilities
                 {
                     isEqual =
                         (touchEventData.Collider == this.Collider &&
-                        touchEventData.Collider2D == this.Collider2D &&
-                        touchEventData.RectTransform == this.RectTransform &&
-                        touchEventData.GameObjectAttached == this.GameObjectAttached &&
-                        touchEventData.IsInside == this.IsInside &&
-                        touchEventData.SortingLayer == this.SortingLayer &&
-                        touchEventData.DragCallback == this.DragCallback &&
-                        touchEventData.TapCallback == this.TapCallback);
+                            touchEventData.Collider2D == this.Collider2D &&
+                            touchEventData.RectTransform == this.RectTransform &&
+                            touchEventData.GameObjectAttached == this.GameObjectAttached &&
+                            touchEventData.IsInside == this.IsInside &&
+                            touchEventData.SortingLayer == this.SortingLayer &&
+                            touchEventData.DragCallback == this.DragCallback &&
+                            touchEventData.TapCallback == this.TapCallback);
                 }
                 else
                 {
@@ -432,34 +443,16 @@ namespace IBM.Watson.DeveloperCloud.Utilities
 
             if (!string.IsNullOrEmpty(callback))
             {
-
                 if (m_DragEvents.ContainsKey(numberOfFinger))
                 {
-                    bool itemRemovedSuccess = m_DragEvents[numberOfFinger].Remove(new TouchEventData(gameObjectToDrag, callback, SortingLayer, isDragInside));
+                    int numberOfRemovedCallbacks = m_DragEvents[numberOfFinger].RemoveAll(
+                        e => 
+                        e.GameObjectAttached == gameObjectToDrag && 
+                        e.DragCallback == callback  &&
+                        e.SortingLayer == SortingLayer &&
+                        e.IsInside == isDragInside);
 
-                    if (!itemRemovedSuccess)
-                    {
-
-                        #if ENABLE_DEBUGGING
-                        Log.Debug("TouchEventManager", "UnregisterDragEvent couldn't remove touch event. Now, searching one by one. ");
-                        #endif
-
-                        for (int i = 0; i < m_DragEvents[numberOfFinger].Count; i++)
-                        {
-                            if (m_DragEvents[numberOfFinger][i].GameObjectAttached == gameObjectToDrag
-                                && (m_DragEvents[numberOfFinger][i].DragCallback).CompareTo(callback) == 0
-                                && m_DragEvents[numberOfFinger][i].SortingLayer == SortingLayer
-                                && m_DragEvents[numberOfFinger][i].IsInside == isDragInside)
-                            {
-                                m_DragEvents[numberOfFinger].RemoveAt(i);
-                                itemRemovedSuccess = true;
-                                break;
-                            }
-
-                        }
-                    }
-
-                    success &= itemRemovedSuccess;
+                    success &= (numberOfRemovedCallbacks > 0);
                 }
             }
             else
@@ -472,10 +465,11 @@ namespace IBM.Watson.DeveloperCloud.Utilities
 
         private void OneFingerTransformedHandler(object sender, System.EventArgs e)
         {
-            RaycastHit hit = default(RaycastHit);
-            RaycastHit2D hit2D = default(RaycastHit2D);
-
-
+            RaycastHit hitToFire3D = default(RaycastHit);
+            RaycastHit2D hitToFire2D = default(RaycastHit2D);
+            #if UNITY_4_6 || UNITY_5 || UNITY_5_3_OR_NEWER
+            RaycastResult hitToFire2DEventSystem = default(RaycastResult);
+            #endif
 
             //Log.Status ("TouchEventManager", "oneFingerManipulationTransformedHandler: {0}", m_OneFingerMoveGesture.DeltaPosition);
             if (m_Active)
@@ -488,10 +482,62 @@ namespace IBM.Watson.DeveloperCloud.Utilities
                 {
                     if (kp.Key == 1)
                     {
+                        //-----
 
+                        //Adding Variables for 3D Touch Check
+                        Transform hitTransform3D = null;
+                        RaycastHit hit3D = default(RaycastHit);
+                        bool isHitOnLayer3D = Physics.Raycast(rayForDrag, out hit3D, Mathf.Infinity, kp.Key);
+                        if (isHitOnLayer3D)
+                        {
+                            hitTransform3D = hit3D.collider.transform;
+                        }
+
+                        //Adding Variables for 2D Touch Check for 2d Colliders
+                        Transform hitTransform2D = null;
+                        RaycastHit2D hit2D = Physics2D.Raycast(rayForDrag.origin, rayForDrag.direction, Mathf.Infinity,  kp.Key);
+                        bool isHitOnLayer2D = false;
+                        if (hit2D.collider != null)
+                        {
+                            isHitOnLayer2D = true;
+                            hitTransform2D = hit2D.collider.transform;
+                        }
+
+                        #if UNITY_4_6 || UNITY_5 || UNITY_5_3_OR_NEWER
+                        //Adding Variables for Event.System Touch for UI Elements
+                        Transform hitTransform2DEventSystem = null;
+                        bool isHitOnLayer2DEventSystem = false;
+                        RaycastResult hit2DEventSystem = default(RaycastResult);
+                        if (EventSystem.current != null)
+                        {
+                            PointerEventData pointerEventForTap = new PointerEventData(EventSystem.current);
+                            pointerEventForTap.position = m_OneFingerMoveGesture.ScreenPosition;
+                            List<RaycastResult> raycastResultListFor2DEventSystem = new List<RaycastResult>();
+                            EventSystem.current.RaycastAll (pointerEventForTap, raycastResultListFor2DEventSystem);
+                            foreach (RaycastResult itemRaycastResult in raycastResultListFor2DEventSystem)
+                            {
+
+                                LayerMask layerMaskOfItem = 1 << itemRaycastResult.gameObject.layer;
+                                isHitOnLayer2DEventSystem = ((layerMaskOfItem.value & kp.Key) == layerMaskOfItem.value);
+                                if (isHitOnLayer2DEventSystem)
+                                {
+                                    hitTransform2DEventSystem = itemRaycastResult.gameObject.transform;
+                                    break;
+                                }
+                            }
+                        }
+                        #endif
+                        //-----
                         for (int i = 0; i < kp.Value.Count; ++i)
                         {
                             TouchEventData dragEventData = kp.Value[i];
+
+                            if (kp.Value[i].ColliderList == null && kp.Value[i].ColliderList2D == null && kp.Value[i].RectTransformList == null )
+                            {
+                                Log.Warning("TouchEventManager", "Removing invalid collider event receiver from OneFingerDrag");
+                                kp.Value.RemoveAt(i--);
+                                continue;
+                            }
 
                             if (string.IsNullOrEmpty(dragEventData.DragCallback))
                             {
@@ -502,66 +548,239 @@ namespace IBM.Watson.DeveloperCloud.Utilities
 
                             bool hasDragOnObject = false;
                             //If we can drag the object, we should check that whether there is a raycast or not!
-                            if (dragEventData.CanDragObject)
+
+                            //3d Hit Check
+                            if (dragEventData.ColliderList != null)
                             {
-                                bool isHitOnLayer = Physics.Raycast(rayForDrag, out hit, Mathf.Infinity, 1 << dragEventData.GameObjectAttached.layer);
-                                Transform hitTransform = null;
-
-                                if (isHitOnLayer)
+                                if (dragEventData.IsInside && isHitOnLayer3D && Array.Exists(dragEventData.ColliderList, element => element.transform == hitTransform3D))
                                 {
-                                    hitTransform = hit.transform;
-                                }
-                                else
-                                {
-                                    hit2D = Physics2D.Raycast(rayForDrag.origin, rayForDrag.direction, Mathf.Infinity, 1 << dragEventData.GameObjectAttached.layer);
-                                    if (hit2D.collider != null)
-                                    {
-                                        isHitOnLayer = true;
-                                        hitTransform = hit2D.transform;
-                                    }
-                                }
-
-
-                                if (isHitOnLayer && dragEventData.HasTouchedOn(hitTransform) && dragEventData.IsInside)
-                                {
-                                    hasDragOnObject = true;
-                                }
-                                else if (!isHitOnLayer && !dragEventData.IsInside)
-                                {
-                                    hasDragOnObject = true;
-                                }
-                                else
-                                {
-                                    //do nothing - we were checking that draggable object that we touched!
-                                }
-
-                            }
-
-                            if (hasDragOnObject || !dragEventData.CanDragObject)
-                            {
-                                //They are all fullscreen drags!
-                                if (dragEventToFire == null)
-                                {
-                                    dragEventToFire = dragEventData;
-                                }
-                                else
-                                {
-                                    if (dragEventData.SortingLayer > dragEventToFire.SortingLayer || (dragEventToFire.SortingLayer == dragEventData.SortingLayer && !dragEventToFire.IsInside))
+                                    //Tapped inside the object
+                                    if (dragEventToFire == null)
                                     {
                                         dragEventToFire = dragEventData;
+                                        hitToFire3D = hit3D;
+                                        hitToFire2D = default(RaycastHit2D);
+                                        hitToFire2DEventSystem = default(RaycastResult);
+                                        #if ENABLE_DEBUGGING
+                                        Log.Debug("TouchEventManager", "OneFingerDrag Event Found 3D. itemCollider: {0}, callback: {1}, SortingLayer: {2}, isTapInside: {3} ",hitTransform3D, dragEventData.DragCallback, dragEventData.SortingLayer, dragEventData.IsInside);
+                                        #endif
                                     }
                                     else
                                     {
-                                        //do nothing
+                                        if (dragEventData.SortingLayer > dragEventToFire.SortingLayer ||
+                                            (dragEventToFire.SortingLayer == dragEventData.SortingLayer && !dragEventToFire.IsInside))
+                                        {
+                                            dragEventToFire = dragEventData;
+                                            hitToFire3D = hit3D;
+                                            hitToFire2D = default(RaycastHit2D);
+                                            hitToFire2DEventSystem = default(RaycastResult);
+
+                                            #if ENABLE_DEBUGGING
+                                            Log.Debug("TouchEventManager", "OneFingerDrag Found 3D. itemCollider: {0}, callback: {1}, SortingLayer: {2}, isTapInside: {3} ",hitTransform3D, dragEventData.DragCallback, dragEventData.SortingLayer, dragEventData.IsInside);
+                                            #endif
+                                        }
+                                        else
+                                        {
+                                            //do nothing
+                                        }
+                                    }
+
+                                }
+                                else if ( !dragEventData.IsInside && (!isHitOnLayer3D || !Array.Exists(dragEventData.ColliderList, element => element.transform == hitTransform3D)))
+                                {
+                                    //Tapped outside the object
+                                    if (dragEventToFire == null)
+                                    {
+                                        dragEventToFire = dragEventData;
+                                        hitToFire3D = hit3D;
+                                        hitToFire2D = default(RaycastHit2D);
+                                        hitToFire2DEventSystem = default(RaycastResult);
+
+                                        #if ENABLE_DEBUGGING
+                                        Log.Debug("TouchEventManager", "OneFingerDrag Event Found 3D - outside. itemCollider: {0}, callback: {1}, SortingLayer: {2}, isTapInside: {3} ",hitTransform3D, dragEventData.DragCallback, dragEventData.SortingLayer, dragEventData.IsInside);
+                                        #endif
+                                    }
+                                    else
+                                    {
+                                        if (dragEventData.SortingLayer > dragEventToFire.SortingLayer ||
+                                            (dragEventToFire.SortingLayer == dragEventData.SortingLayer && !dragEventToFire.IsInside))
+                                        {
+                                            dragEventToFire = dragEventData;
+                                            hitToFire3D = hit3D;
+                                            hitToFire2D = default(RaycastHit2D);
+                                            hitToFire2DEventSystem = default(RaycastResult);
+
+                                            #if ENABLE_DEBUGGING
+                                            Log.Debug("TouchEventManager", "OneFingerDrag Event Found 3D - outside. itemCollider: {0}, callback: {1}, SortingLayer: {2}, isTapInside: {3} ",hitTransform3D, dragEventData.DragCallback, dragEventData.SortingLayer, dragEventData.IsInside);
+                                            #endif
+                                        }
+                                        else
+                                        {
+                                            //do nothing
+                                        }
                                     }
                                 }
+                                else
+                                {
+                                    //do nothing
+                                }
                             }
+
+                            //2d Hit Check
+                            if (dragEventData.Collider2D != null)
+                            {
+                                if (dragEventData.IsInside && isHitOnLayer2D && hitTransform2D == dragEventData.Collider2D.transform)
+                                {
+                                    //Tapped inside the object
+                                    if (dragEventToFire == null)
+                                    {
+                                        dragEventToFire = dragEventData;
+                                        hitToFire3D = default(RaycastHit);
+                                        hitToFire2D = hit2D;
+                                        hitToFire2DEventSystem = default(RaycastResult);
+
+                                        #if ENABLE_DEBUGGING
+                                        Log.Debug("TouchEventManager", "OneFingerDrag Event Found 2D. itemCollider: {0}, callback: {1}, SortingLayer: {2}, isTapInside: {3} ",hitTransform2D, dragEventData.TapCallback, dragEventData.SortingLayer, dragEventData.IsInside);
+                                        #endif
+                                    }
+                                    else
+                                    {
+                                        if (dragEventData.SortingLayer > dragEventToFire.SortingLayer ||
+                                            (dragEventToFire.SortingLayer == dragEventData.SortingLayer && !dragEventToFire.IsInside))
+                                        {
+                                            dragEventToFire = dragEventData;
+                                            hitToFire3D = default(RaycastHit);
+                                            hitToFire2D = hit2D;
+                                            hitToFire2DEventSystem = default(RaycastResult);
+
+                                            #if ENABLE_DEBUGGING
+                                            Log.Debug("TouchEventManager", "OneFingerDrag Event Found 2D. itemCollider: {0}, callback: {1}, SortingLayer: {2}, isTapInside: {3} ",hitTransform2D, dragEventData.TapCallback, dragEventData.SortingLayer, dragEventData.IsInside);
+                                            #endif
+                                        }
+                                        else
+                                        {
+                                            //do nothing
+                                        }
+                                    }
+
+                                }
+                                else if (!dragEventData.IsInside && (!isHitOnLayer2D || hitTransform2D != dragEventData.Collider2D.transform))
+                                {
+                                    //Tapped outside the object
+                                    if (dragEventToFire == null)
+                                    {
+                                        dragEventToFire = dragEventData;
+                                        hitToFire3D = default(RaycastHit);
+                                        hitToFire2D = hit2D;
+                                        hitToFire2DEventSystem = default(RaycastResult);
+
+                                        #if ENABLE_DEBUGGING
+                                        Log.Debug("TouchEventManager", "OneFingerDrag Event Found 2D. itemCollider: {0}, callback: {1}, SortingLayer: {2}, isTapInside: {3} ",hitTransform2D, dragEventData.TapCallback, dragEventData.SortingLayer, dragEventData.IsInside);
+                                        #endif
+                                    }
+                                    else
+                                    {
+                                        if (dragEventData.SortingLayer > dragEventToFire.SortingLayer)
+                                        {
+                                            dragEventToFire = dragEventData;
+                                            hitToFire3D = default(RaycastHit);
+                                            hitToFire2D = hit2D;
+                                            hitToFire2DEventSystem = default(RaycastResult);
+
+                                            #if ENABLE_DEBUGGING
+                                            Log.Debug("TouchEventManager", "OneFingerDrag Event Found 2D. itemCollider: {0}, callback: {1}, SortingLayer: {2}, isTapInside: {3} ",hitTransform2D, dragEventData.TapCallback, dragEventData.SortingLayer, dragEventData.IsInside);
+                                            #endif
+                                        }
+                                        else
+                                        {
+                                            //do nothing
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    //do nothing
+                                }
+                            }
+
+                            #if UNITY_4_6 || UNITY_5 || UNITY_5_3_OR_NEWER
+                            //2D UI Hit Check using EventSystem
+                            if (dragEventData.RectTransform != null)
+                            {
+                                if (dragEventData.IsInside && isHitOnLayer2DEventSystem && hitTransform2DEventSystem == dragEventData.RectTransform.transform)
+                                {
+                                    //Tapped inside the object
+                                    if (dragEventToFire == null)
+                                    {
+                                        dragEventToFire = dragEventData;
+                                        hitToFire3D = default(RaycastHit);
+                                        hitToFire2D = default(RaycastHit2D);
+                                        hitToFire2DEventSystem = hit2DEventSystem;
+
+                                        #if ENABLE_DEBUGGING
+                                        Log.Debug("TouchEventManager", "OneFingerDrag Event Found 2D Event System. itemCollider: {0}, callback: {1}, SortingLayer: {2}, isTapInside: {3} ",hitTransform2DEventSystem, dragEventData.TapCallback, dragEventData.SortingLayer, dragEventData.IsInside);
+                                        #endif
+                                    } else
+                                    {
+                                        if (dragEventData.SortingLayer > dragEventToFire.SortingLayer ||
+                                            (dragEventToFire.SortingLayer == dragEventData.SortingLayer && !dragEventToFire.IsInside))
+                                        {
+                                            dragEventToFire = dragEventData;
+                                            hitToFire3D = default(RaycastHit);
+                                            hitToFire2D = default(RaycastHit2D);
+                                            hitToFire2DEventSystem = hit2DEventSystem;
+
+                                            #if ENABLE_DEBUGGING
+                                            Log.Debug("TouchEventManager", "OneFingerDrag Event Found 2D Event System. itemCollider: {0}, callback: {1}, SortingLayer: {2}, isTapInside: {3} ",hitTransform2DEventSystem, dragEventData.TapCallback, dragEventData.SortingLayer, dragEventData.IsInside);
+                                            #endif
+                                        } else
+                                        {
+                                            //do nothing
+                                        }
+                                    }
+
+                                } else if ( !dragEventData.IsInside && (!isHitOnLayer2DEventSystem || hitTransform2DEventSystem != dragEventData.RectTransform.transform))
+                                {
+                                    //Tapped outside the object
+                                    if (dragEventToFire == null)
+                                    {
+                                        dragEventToFire = dragEventData;
+                                        hitToFire3D = default(RaycastHit);
+                                        hitToFire2D = default(RaycastHit2D);
+                                        hitToFire2DEventSystem = hit2DEventSystem;
+
+                                        #if ENABLE_DEBUGGING
+                                        Log.Debug("TouchEventManager", "OneFingerDrag Event Found 2D Event System. itemCollider: {0}, callback: {1}, SortingLayer: {2}, isTapInside: {3} ",hitTransform2DEventSystem, dragEventData.TapCallback, dragEventData.SortingLayer, dragEventData.IsInside);
+                                        #endif
+                                    } else
+                                    {
+                                        if (dragEventData.SortingLayer > dragEventToFire.SortingLayer)
+                                        {
+                                            dragEventToFire = dragEventData;
+                                            hitToFire3D = default(RaycastHit);
+                                            hitToFire2D = default(RaycastHit2D);
+                                            hitToFire2DEventSystem = hit2DEventSystem;
+
+                                            #if ENABLE_DEBUGGING
+                                            Log.Debug("TouchEventManager", "OneFingerDrag Event Found 2D Event System. itemCollider: {0}, callback: {1}, SortingLayer: {2}, isTapInside: {3} ",hitTransform2DEventSystem, dragEventData.TapCallback, dragEventData.SortingLayer, dragEventData.IsInside);
+                                            #endif
+                                        } else
+                                        {
+                                            //do nothing
+                                        }
+                                    }
+                                } else
+                                {
+                                    //do nothing
+                                }
+                            }
+                            #endif
                         }
                     }
                 }
 
                 if (dragEventToFire != null)
-                    EventManager.Instance.SendEvent(dragEventToFire.DragCallback, m_OneFingerMoveGesture, hit, hit2D);
+                    EventManager.Instance.SendEvent(dragEventToFire.DragCallback, m_OneFingerMoveGesture, hitToFire3D, hitToFire2D, hitToFire2DEventSystem);
 
                 EventManager.Instance.SendEvent("OnDragOneFingerFullscreen", m_OneFingerMoveGesture);
             }
@@ -620,7 +839,12 @@ namespace IBM.Watson.DeveloperCloud.Utilities
 
         #region TapEvents - Register / UnRegister / Call 
         /// <summary>
-        /// Registers the tap event.
+        /// Registers the tap event. 
+        /// 3d Colliders is the first priority
+        /// 2d Collider is the second priority 
+        /// 2d UI Event System is the third priority
+        /// If object has 3d collider, and 2d collider and an UI element. 
+        /// Touch is checking by priority order. 
         /// </summary>
         /// <returns><c>true</c>, if tap event was registered, <c>false</c> otherwise.</returns>
         /// <param name="gameObjectToTouch">Game object to touch.</param>
@@ -675,7 +899,7 @@ namespace IBM.Watson.DeveloperCloud.Utilities
                                 int layerMaskAsKey = (layerMask != default(LayerMask)) ? layerMask.value : (1 << gameObjectToTouch.layer);
 
                                 #if ENABLE_DEBUGGING
-                            Log.Debug("TouchEventManager", "RegisterTapEvent For 2D. itemCollider: {0}, callback: {1}, SortingLayer: {2}, isTapInside: {3}",itemCollider, callback, SortingLayer, isTapInside);
+                                Log.Debug("TouchEventManager", "RegisterTapEvent For 2D. itemCollider: {0}, callback: {1}, SortingLayer: {2}, isTapInside: {3}",itemCollider, callback, SortingLayer, isTapInside);
                                 #endif
 
                                 if (m_TapEvents.ContainsKey (layerMaskAsKey))
@@ -693,7 +917,7 @@ namespace IBM.Watson.DeveloperCloud.Utilities
                             Log.Warning ("TouchEventManager", "There is no 2D collider of given gameobjectToTouch");
                         }
                     }
-
+                    #if UNITY_4_6 || UNITY_5 || UNITY_5_3_OR_NEWER
                     if (!success)
                     {
                         RectTransform[] rectTransformList = gameObjectToTouch.GetComponentsInChildren<RectTransform> (includeInactive: true);
@@ -704,7 +928,7 @@ namespace IBM.Watson.DeveloperCloud.Utilities
                                 int layerMaskAsKey = (layerMask != default(LayerMask)) ? layerMask.value : (1 << itemRectTransform.gameObject.layer);
 
                                 #if ENABLE_DEBUGGING
-                            Log.Debug("TouchEventManager", "RegisterTapEvent For 2D Event System. itemRectTransform: {0}, callback: {1}, SortingLayer: {2}, isTapInside: {3}",itemRectTransform, callback, SortingLayer, isTapInside);
+                                Log.Debug("TouchEventManager", "RegisterTapEvent For 2D Event System. itemRectTransform: {0}, callback: {1}, SortingLayer: {2}, isTapInside: {3}",itemRectTransform, callback, SortingLayer, isTapInside);
                                 #endif
 
                                 if (m_TapEvents.ContainsKey (layerMaskAsKey))
@@ -722,6 +946,7 @@ namespace IBM.Watson.DeveloperCloud.Utilities
                             Log.Warning ("TouchEventManager", "There is no Rect Transform of given gameobjectToTouch");
                         }
                     }
+                    #endif
 
                 }
                 else
@@ -760,35 +985,61 @@ namespace IBM.Watson.DeveloperCloud.Utilities
                     {
                         success = true;
                         Collider[] colliderList = gameObjectToTouch.GetComponentsInChildren<Collider>(includeInactive: true);
-                        foreach (Collider itemCollider in colliderList)
+                        if (colliderList != null && colliderList.Length > 0)
                         {
-                            bool itemRemovedSuccess = m_TapEvents[layerMaskAsKey].Remove(new TouchEventData(itemCollider, callback, SortingLayer, isTapInside));
-
-
-                            if (!itemRemovedSuccess)
+                            foreach (Collider itemCollider in colliderList)
                             {
+                                int numberOfRemovedCallbacks = m_TapEvents[layerMaskAsKey].RemoveAll(
+                                    e => 
+                                    e.Collider == itemCollider && 
+                                    e.TapCallback == callback  &&
+                                    e.SortingLayer == SortingLayer &&
+                                    e.IsInside == isTapInside);
 
-#if ENABLE_DEBUGGING
-                        Log.Debug("TouchEventManager", "UnregisterTapEvent couldn't remove touch event. Now, searching one by one. ");
-#endif
+                                success &= (numberOfRemovedCallbacks > 0);
+                            }
+                        }
 
-                                for (int i = 0; i < m_TapEvents[layerMaskAsKey].Count; i++)
+                        if (!success)
+                        {
+                            success = true;
+                            Collider2D[] colliderList2D = gameObjectToTouch.GetComponentsInChildren<Collider2D>(includeInactive: true);
+                            if (colliderList2D != null && colliderList2D.Length > 0)
+                            {
+                                foreach (Collider2D itemCollider2D in colliderList2D)
                                 {
-                                    if (m_TapEvents[layerMaskAsKey][i].Collider == itemCollider
-                                        && (m_TapEvents[layerMaskAsKey][i].TapCallback).CompareTo(callback) == 0
-                                        && m_TapEvents[layerMaskAsKey][i].SortingLayer == SortingLayer
-                                        && m_TapEvents[layerMaskAsKey][i].IsInside == isTapInside)
-                                    {
-                                        m_TapEvents[layerMaskAsKey].RemoveAt(i);
-                                        itemRemovedSuccess = true;
-                                        break;
-                                    }
+                                    int numberOfRemovedCallbacks = m_TapEvents[layerMaskAsKey].RemoveAll(
+                                        e => 
+                                        e.Collider2D == itemCollider2D && 
+                                        e.TapCallback == callback  &&
+                                        e.SortingLayer == SortingLayer &&
+                                        e.IsInside == isTapInside);
 
+                                    success &= (numberOfRemovedCallbacks > 0);
                                 }
                             }
-
-                            success &= itemRemovedSuccess;
                         }
+                        #if UNITY_4_6 || UNITY_5 || UNITY_5_3_OR_NEWER
+                        if (!success)
+                        {
+                            success = true;
+                            RectTransform[] rectTransformList = gameObjectToTouch.GetComponentsInChildren<RectTransform> (includeInactive: true);
+                            if (rectTransformList != null && rectTransformList.Length > 0)
+                            {
+                                foreach (RectTransform itemRectTransform in rectTransformList)
+                                {
+                                    int numberOfRemovedCallbacks = m_TapEvents[layerMaskAsKey].RemoveAll(
+                                        e => 
+                                        e.RectTransform == itemRectTransform && 
+                                        e.TapCallback == callback  &&
+                                        e.SortingLayer == SortingLayer &&
+                                        e.IsInside == isTapInside);
+
+                                    success &= (numberOfRemovedCallbacks > 0);
+                                }
+                            }
+                        }
+                        #endif
                     }
                 }
                 else
@@ -816,8 +1067,9 @@ namespace IBM.Watson.DeveloperCloud.Utilities
 
                 RaycastHit hitToFire3D = default(RaycastHit);
                 RaycastHit2D hitToFire2D = default(RaycastHit2D);
+                #if UNITY_4_6 || UNITY_5 || UNITY_5_3_OR_NEWER
                 RaycastResult hitToFire2DEventSystem = default(RaycastResult);
-
+                #endif
 
                 foreach (var kp in m_TapEvents)
                 {
@@ -841,7 +1093,7 @@ namespace IBM.Watson.DeveloperCloud.Utilities
                         hitTransform2D = hit2D.collider.transform;
                     }
 
-                    //TODO: Check for Unity Version - 4.6+
+                    #if UNITY_4_6 || UNITY_5 || UNITY_5_3_OR_NEWER
                     //Adding Variables for Event.System Tap for UI Elements
                     Transform hitTransform2DEventSystem = null;
                     bool isHitOnLayer2DEventSystem = false;
@@ -854,7 +1106,6 @@ namespace IBM.Watson.DeveloperCloud.Utilities
                         EventSystem.current.RaycastAll (pointerEventForTap, raycastResultListFor2DEventSystem);
                         foreach (RaycastResult itemRaycastResult in raycastResultListFor2DEventSystem)
                         {
-
                             LayerMask layerMaskOfItem = 1 << itemRaycastResult.gameObject.layer;
                             isHitOnLayer2DEventSystem = ((layerMaskOfItem.value & kp.Key) == layerMaskOfItem.value);
                             if (isHitOnLayer2DEventSystem)
@@ -864,6 +1115,7 @@ namespace IBM.Watson.DeveloperCloud.Utilities
                             }
                         }
                     }
+                    #endif
 
 
                     for (int i = 0; i < kp.Value.Count; ++i)
@@ -1035,10 +1287,9 @@ namespace IBM.Watson.DeveloperCloud.Utilities
                             {
                                 //do nothing
                             }
-
-
                         }
 
+                        #if UNITY_4_6 || UNITY_5 || UNITY_5_3_OR_NEWER
                         //2D UI Hit Check using EventSystem
                         if (tapEventData.RectTransform != null)
                         {
@@ -1075,9 +1326,21 @@ namespace IBM.Watson.DeveloperCloud.Utilities
                                 }
 
                             } else if ((!isHitOnLayer2DEventSystem || hitTransform2DEventSystem != tapEventData.RectTransform.transform) && !tapEventData.IsInside)
+                            {
+                                //Tapped outside the object
+                                if (tapEventToFire == null)
                                 {
-                                    //Tapped outside the object
-                                    if (tapEventToFire == null)
+                                    tapEventToFire = tapEventData;
+                                    hitToFire3D = default(RaycastHit);
+                                    hitToFire2D = default(RaycastHit2D);
+                                    hitToFire2DEventSystem = hit2DEventSystem;
+
+                                    #if ENABLE_DEBUGGING
+                                    Log.Debug("TouchEventManager", "Tap Event Found 2D Event System. itemCollider: {0}, callback: {1}, SortingLayer: {2}, isTapInside: {3} ",hitTransform2DEventSystem, tapEventData.TapCallback, tapEventData.SortingLayer, tapEventData.IsInside);
+                                    #endif
+                                } else
+                                {
+                                    if (tapEventData.SortingLayer > tapEventToFire.SortingLayer)
                                     {
                                         tapEventToFire = tapEventData;
                                         hitToFire3D = default(RaycastHit);
@@ -1085,30 +1348,19 @@ namespace IBM.Watson.DeveloperCloud.Utilities
                                         hitToFire2DEventSystem = hit2DEventSystem;
 
                                         #if ENABLE_DEBUGGING
-                                    Log.Debug("TouchEventManager", "Tap Event Found 2D Event System. itemCollider: {0}, callback: {1}, SortingLayer: {2}, isTapInside: {3} ",hitTransform2DEventSystem, tapEventData.TapCallback, tapEventData.SortingLayer, tapEventData.IsInside);
+                                        Log.Debug("TouchEventManager", "Tap Event Found 2D Event System. itemCollider: {0}, callback: {1}, SortingLayer: {2}, isTapInside: {3} ",hitTransform2DEventSystem, tapEventData.TapCallback, tapEventData.SortingLayer, tapEventData.IsInside);
                                         #endif
                                     } else
                                     {
-                                        if (tapEventData.SortingLayer > tapEventToFire.SortingLayer)
-                                        {
-                                            tapEventToFire = tapEventData;
-                                            hitToFire3D = default(RaycastHit);
-                                            hitToFire2D = default(RaycastHit2D);
-                                            hitToFire2DEventSystem = hit2DEventSystem;
-
-                                            #if ENABLE_DEBUGGING
-                                        Log.Debug("TouchEventManager", "Tap Event Found 2D Event System. itemCollider: {0}, callback: {1}, SortingLayer: {2}, isTapInside: {3} ",hitTransform2DEventSystem, tapEventData.TapCallback, tapEventData.SortingLayer, tapEventData.IsInside);
-                                            #endif
-                                        } else
-                                        {
-                                            //do nothing
-                                        }
+                                        //do nothing
                                     }
-                                } else
-                                {
-                                    //do nothing
                                 }
+                            } else
+                            {
+                                //do nothing
+                            }
                         }
+                        #endif
 
                     }
                 }
@@ -1141,11 +1393,15 @@ namespace IBM.Watson.DeveloperCloud.Utilities
                 {
                     Collider[] colliderList = gameObjectToTouch.GetComponentsInChildren<Collider>();
 
-                    if (colliderList != null)
+                    if (colliderList != null && colliderList.Length > 0)
                     {
                         foreach (Collider itemCollider in colliderList)
                         {
                             int layerMaskAsKey = (layerMask != default(LayerMask)) ? layerMask.value : (1 << gameObjectToTouch.layer);
+
+                            #if ENABLE_DEBUGGING
+                            Log.Debug("TouchEventManager", "RegisterDoubleTapEvent for 3D. itemCollider: {0}, callback: {1}, SortingLayer: {2}, isTapInside: {3}",itemCollider, callback, SortingLayer, isDoubleTapInside);
+                            #endif
 
                             if (m_DoubleTapEvents.ContainsKey(layerMaskAsKey))
                             {
@@ -1161,8 +1417,69 @@ namespace IBM.Watson.DeveloperCloud.Utilities
                     }
                     else
                     {
-                        Log.Warning("TouchEventManager", "There is no collider of given gameobjectToTouch");
+                        Log.Warning("TouchEventManager", "There is no 3D collider of given gameobjectToTouch (double-tap)");
                     }
+
+                    if (!success)
+                    {
+                        Collider2D[] colliderList2D = gameObjectToTouch.GetComponentsInChildren<Collider2D> ();
+                        if (colliderList2D != null && colliderList2D.Length > 0)
+                        {
+                            foreach (Collider2D itemCollider in colliderList2D)
+                            {
+                                int layerMaskAsKey = (layerMask != default(LayerMask)) ? layerMask.value : (1 << gameObjectToTouch.layer);
+
+                                #if ENABLE_DEBUGGING
+                                Log.Debug("TouchEventManager", "RegisterDoubleTapEvent For 2D. itemCollider: {0}, callback: {1}, SortingLayer: {2}, isTapInside: {3}",itemCollider, callback, SortingLayer, isDoubleTapInside);
+                                #endif
+
+                                if (m_DoubleTapEvents.ContainsKey (layerMaskAsKey))
+                                {
+                                    m_DoubleTapEvents [layerMaskAsKey].Add (new TouchEventData (itemCollider, callback, SortingLayer, isDoubleTapInside));
+                                } else
+                                {
+                                    m_DoubleTapEvents [layerMaskAsKey] = new List<TouchEventData> () { new TouchEventData (itemCollider, callback, SortingLayer, isDoubleTapInside) };
+                                }
+                            }
+
+                            success = true;
+                        } else
+                        {
+                            Log.Warning ("TouchEventManager", "There is no 2D collider of given gameobjectToTouch (double-tap)");
+                        }
+                    }
+
+                    #if UNITY_4_6 || UNITY_5 || UNITY_5_3_OR_NEWER
+                    if (!success)
+                    {
+                        RectTransform[] rectTransformList = gameObjectToTouch.GetComponentsInChildren<RectTransform> (includeInactive: true);
+                        if (rectTransformList != null && rectTransformList.Length > 0)
+                        {
+                            foreach (RectTransform itemRectTransform in rectTransformList)
+                            {
+                                int layerMaskAsKey = (layerMask != default(LayerMask)) ? layerMask.value : (1 << itemRectTransform.gameObject.layer);
+
+                                #if ENABLE_DEBUGGING
+                                Log.Debug("TouchEventManager", "RegisterDoubleTapEvent For 2D Event System. itemRectTransform: {0}, callback: {1}, SortingLayer: {2}, isTapInside: {3}",itemRectTransform, callback, SortingLayer, isDoubleTapInside);
+                                #endif
+
+                                if (m_DoubleTapEvents.ContainsKey (layerMaskAsKey))
+                                {
+                                    m_DoubleTapEvents [layerMaskAsKey].Add (new TouchEventData (itemRectTransform, callback, SortingLayer, isDoubleTapInside));
+                                } else
+                                {
+                                    m_DoubleTapEvents [layerMaskAsKey] = new List<TouchEventData> () { new TouchEventData (itemRectTransform, callback, SortingLayer, isDoubleTapInside) };
+                                }
+                            }
+
+                            success = true;
+                        } else
+                        {
+                            Log.Warning ("TouchEventManager", "There is no Rect Transform of given gameobjectToTouch (double-tap)");
+                        }
+                    }
+                    #endif
+
                 }
                 else
                 {
@@ -1199,34 +1516,62 @@ namespace IBM.Watson.DeveloperCloud.Utilities
                     if (m_DoubleTapEvents.ContainsKey(layerMaskAsKey))
                     {
                         success = true;
-                        Collider[] colliderList = gameObjectToTouch.GetComponentsInChildren<Collider>();
-                        foreach (Collider itemCollider in colliderList)
+                        Collider[] colliderList = gameObjectToTouch.GetComponentsInChildren<Collider>(includeInactive: true);
+                        if (colliderList != null && colliderList.Length > 0)
                         {
-                            bool itemRemovedSuccess = m_DoubleTapEvents[layerMaskAsKey].Remove(new TouchEventData(itemCollider, callback, SortingLayer, isDoubleTapInside));
-
-                            if (!itemRemovedSuccess)
+                            foreach (Collider itemCollider in colliderList)
                             {
+                                int numberOfRemovedCallbacks = m_DoubleTapEvents[layerMaskAsKey].RemoveAll(
+                                    e => 
+                                    e.Collider == itemCollider && 
+                                    e.TapCallback == callback  &&
+                                    e.SortingLayer == SortingLayer &&
+                                    e.IsInside == isDoubleTapInside);
 
-#if ENABLE_DEBUGGING
-                        Log.Debug("TouchEventManager", "UnregisterDoubleTapEvent couldn't remove touch event. Now, searching one by one. ");
-#endif
+                                success &= (numberOfRemovedCallbacks > 0);
+                            }
+                        }
 
-                                for (int i = 0; i < m_DoubleTapEvents[layerMaskAsKey].Count; i++)
+                        if (!success)
+                        {
+                            success = true;
+                            Collider2D[] colliderList2D = gameObjectToTouch.GetComponentsInChildren<Collider2D>(includeInactive: true);
+                            if (colliderList2D != null && colliderList2D.Length > 0)
+                            {
+                                foreach (Collider2D itemCollider2D in colliderList2D)
                                 {
-                                    if (m_DoubleTapEvents[layerMaskAsKey][i].Collider == itemCollider
-                                        && (m_DoubleTapEvents[layerMaskAsKey][i].TapCallback).CompareTo(callback) == 0
-                                        && m_DoubleTapEvents[layerMaskAsKey][i].SortingLayer == SortingLayer
-                                        && m_DoubleTapEvents[layerMaskAsKey][i].IsInside == isDoubleTapInside)
-                                    {
-                                        m_DoubleTapEvents[layerMaskAsKey].RemoveAt(i);
-                                        itemRemovedSuccess = true;
-                                        break;
-                                    }
+                                    int numberOfRemovedCallbacks = m_DoubleTapEvents[layerMaskAsKey].RemoveAll(
+                                        e => 
+                                        e.Collider2D == itemCollider2D && 
+                                        e.TapCallback == callback  &&
+                                        e.SortingLayer == SortingLayer &&
+                                        e.IsInside == isDoubleTapInside);
+
+                                    success &= (numberOfRemovedCallbacks > 0);
                                 }
                             }
-
-                            success &= itemRemovedSuccess;
                         }
+                        #if UNITY_4_6 || UNITY_5 || UNITY_5_3_OR_NEWER
+                        if (!success)
+                        {
+                            success = true;
+                            RectTransform[] rectTransformList = gameObjectToTouch.GetComponentsInChildren<RectTransform> (includeInactive: true);
+                            if (rectTransformList != null && rectTransformList.Length > 0)
+                            {
+                                foreach (RectTransform itemRectTransform in rectTransformList)
+                                {
+                                    int numberOfRemovedCallbacks = m_DoubleTapEvents[layerMaskAsKey].RemoveAll(
+                                        e => 
+                                        e.RectTransform == itemRectTransform && 
+                                        e.TapCallback == callback  &&
+                                        e.SortingLayer == SortingLayer &&
+                                        e.IsInside == isDoubleTapInside);
+
+                                    success &= (numberOfRemovedCallbacks > 0);
+                                }
+                            }
+                        }
+                        #endif
                     }
                 }
                 else
@@ -1247,97 +1592,320 @@ namespace IBM.Watson.DeveloperCloud.Utilities
         {
             if (m_Active)
             {
-#if ENABLE_DEBUGGING
+                #if ENABLE_DEBUGGING
                 Log.Debug("TouchEventManager", "DoubleTapGesture_Tapped: {0} - {1}", m_DoubleTapGesture.ScreenPosition, m_DoubleTapGesture.NumTouches);
-#endif
+                #endif
 
                 TouchEventData tapEventToFire = null;
-                RaycastHit hit = default(RaycastHit);
-                RaycastHit hitToFire = default(RaycastHit);
+
+                RaycastHit hitToFire3D = default(RaycastHit);
+                RaycastHit2D hitToFire2D = default(RaycastHit2D);
+                #if UNITY_4_6 || UNITY_5 || UNITY_5_3_OR_NEWER
+                RaycastResult hitToFire2DEventSystem = default(RaycastResult);
+                #endif
 
                 foreach (var kp in m_DoubleTapEvents)
                 {
-
+                    //Adding Variables for 3D Tap Check
                     Ray rayForTab = MainCamera.ScreenPointToRay(m_DoubleTapGesture.ScreenPosition);
+                    Transform hitTransform3D = null;
+                    RaycastHit hit3D = default(RaycastHit);
+                    bool isHitOnLayer3D = Physics.Raycast(rayForTab, out hit3D, Mathf.Infinity, kp.Key);
+                    if (isHitOnLayer3D)
+                    {
+                        hitTransform3D = hit3D.collider.transform;
+                    }
 
-                    bool isHitOnLayer = Physics.Raycast(rayForTab, out hit, Mathf.Infinity, kp.Key);
+                    //Adding Variables for 2D Tap Check for 2d Colliders
+                    Transform hitTransform2D = null;
+                    RaycastHit2D hit2D = Physics2D.Raycast(rayForTab.origin, rayForTab.direction, Mathf.Infinity,  kp.Key);
+                    bool isHitOnLayer2D = false;
+                    if (hit2D.collider != null)
+                    {
+                        isHitOnLayer2D = true;
+                        hitTransform2D = hit2D.collider.transform;
+                    }
+
+                    #if UNITY_4_6 || UNITY_5 || UNITY_5_3_OR_NEWER
+                    //Adding Variables for Event.System Tap for UI Elements
+                    Transform hitTransform2DEventSystem = null;
+                    bool isHitOnLayer2DEventSystem = false;
+                    RaycastResult hit2DEventSystem = default(RaycastResult);
+                    if (EventSystem.current != null)
+                    {
+                        PointerEventData pointerEventForTap = new PointerEventData(EventSystem.current);
+                        pointerEventForTap.position = m_DoubleTapGesture.ScreenPosition;
+                        List<RaycastResult> raycastResultListFor2DEventSystem = new List<RaycastResult>();
+                        EventSystem.current.RaycastAll (pointerEventForTap, raycastResultListFor2DEventSystem);
+                        foreach (RaycastResult itemRaycastResult in raycastResultListFor2DEventSystem)
+                        {
+
+                            LayerMask layerMaskOfItem = 1 << itemRaycastResult.gameObject.layer;
+                            isHitOnLayer2DEventSystem = ((layerMaskOfItem.value & kp.Key) == layerMaskOfItem.value);
+                            if (isHitOnLayer2DEventSystem)
+                            {
+                                hitTransform2DEventSystem = itemRaycastResult.gameObject.transform;
+                                break;
+                            }
+                        }
+                    }
+                    #endif
+
 
                     for (int i = 0; i < kp.Value.Count; ++i)
                     {
                         TouchEventData tapEventData = kp.Value[i];
 
-                        if (kp.Value[i].Collider == null)
+                        if (kp.Value[i].Collider == null && kp.Value[i].Collider2D == null && kp.Value[i].RectTransform == null )
                         {
-                            Log.Warning("TouchEventManager", "DoubleTapGesture_Tapped: Removing invalid collider event receiver from TapEventList");
+                            Log.Warning("TouchEventManager", "Removing invalid collider event receiver from DoubleTapEventList");
                             kp.Value.RemoveAt(i--);
                             continue;
                         }
 
                         if (string.IsNullOrEmpty(tapEventData.TapCallback))
                         {
-                            Log.Warning("TouchEventManager", "Removing invalid event receiver from TapEventList");
+                            Log.Warning("TouchEventManager", "Removing invalid event receiver from DoubleTapEventList");
                             kp.Value.RemoveAt(i--);
                             continue;
                         }
 
-                        if (isHitOnLayer && hit.collider.transform == tapEventData.Collider.transform && tapEventData.IsInside)
+                        //3d Hit Check
+                        if (tapEventData.Collider != null)
                         {
-                            //Tapped inside the object
-                            if (tapEventToFire == null)
+                            if (isHitOnLayer3D && hitTransform3D == tapEventData.Collider.transform && tapEventData.IsInside)
                             {
-                                tapEventToFire = tapEventData;
-                                hitToFire = hit;
-                            }
-                            else
-                            {
-                                if (tapEventData.SortingLayer > tapEventToFire.SortingLayer ||
-                                    (tapEventToFire.SortingLayer == tapEventData.SortingLayer && !tapEventToFire.IsInside))
+                                //Tapped inside the object
+                                if (tapEventToFire == null)
                                 {
                                     tapEventToFire = tapEventData;
-                                    hitToFire = hit;
+                                    hitToFire3D = hit3D;
+                                    hitToFire2D = default(RaycastHit2D);
+                                    hitToFire2DEventSystem = default(RaycastResult);
+                                    #if ENABLE_DEBUGGING
+                                    Log.Debug("TouchEventManager", "Double-Tap Event Found 3D. itemCollider: {0}, callback: {1}, SortingLayer: {2}, isTapInside: {3} ",hitTransform3D, tapEventData.TapCallback, tapEventData.SortingLayer, tapEventData.IsInside);
+                                    #endif
                                 }
                                 else
                                 {
-                                    //do nothing
-                                }
-                            }
+                                    if (tapEventData.SortingLayer > tapEventToFire.SortingLayer ||
+                                        (tapEventToFire.SortingLayer == tapEventData.SortingLayer && !tapEventToFire.IsInside))
+                                    {
+                                        tapEventToFire = tapEventData;
+                                        hitToFire3D = hit3D;
+                                        hitToFire2D = default(RaycastHit2D);
+                                        hitToFire2DEventSystem = default(RaycastResult);
 
-                        }
-                        else if ((!isHitOnLayer || hit.collider.transform != tapEventData.Collider.transform) && !tapEventData.IsInside)
-                        {
-                            //Tapped outside the object
-                            if (tapEventToFire == null)
-                            {
-                                tapEventToFire = tapEventData;
-                                hitToFire = hit;
+                                        #if ENABLE_DEBUGGING
+                                        Log.Debug("TouchEventManager", "Double-Tap Event Found 3D. itemCollider: {0}, callback: {1}, SortingLayer: {2}, isTapInside: {3} ",hitTransform3D, tapEventData.TapCallback, tapEventData.SortingLayer, tapEventData.IsInside);
+                                        #endif
+                                    }
+                                    else
+                                    {
+                                        //do nothing
+                                    }
+                                }
+
                             }
-                            else
+                            else if ((!isHitOnLayer3D || hitTransform3D != tapEventData.Collider.transform) && !tapEventData.IsInside)
                             {
-                                if (tapEventData.SortingLayer > tapEventToFire.SortingLayer)
+                                //Tapped outside the object
+                                if (tapEventToFire == null)
                                 {
                                     tapEventToFire = tapEventData;
-                                    hitToFire = hit;
+                                    hitToFire3D = hit3D;
+                                    hitToFire2D = default(RaycastHit2D);
+                                    hitToFire2DEventSystem = default(RaycastResult);
+
+                                    #if ENABLE_DEBUGGING
+                                    Log.Debug("TouchEventManager", "Double-Tap Event Found 3D. itemCollider: {0}, callback: {1}, SortingLayer: {2}, isTapInside: {3} ",hitTransform3D, tapEventData.TapCallback, tapEventData.SortingLayer, tapEventData.IsInside);
+                                    #endif
                                 }
                                 else
                                 {
-                                    //do nothing
+                                    if (tapEventData.SortingLayer > tapEventToFire.SortingLayer)
+                                    {
+                                        tapEventToFire = tapEventData;
+                                        hitToFire3D = hit3D;
+                                        hitToFire2D = default(RaycastHit2D);
+                                        hitToFire2DEventSystem = default(RaycastResult);
+
+                                        #if ENABLE_DEBUGGING
+                                        Log.Debug("TouchEventManager", "Double-Tap Event Found 3D. itemCollider: {0}, callback: {1}, SortingLayer: {2}, isTapInside: {3} ",hitTransform3D, tapEventData.TapCallback, tapEventData.SortingLayer, tapEventData.IsInside);
+                                        #endif
+                                    }
+                                    else
+                                    {
+                                        //do nothing
+                                    }
                                 }
                             }
+                            else
+                            {
+                                //do nothing
+                            }
                         }
-                        else
+
+                        //2d Hit Check
+                        if (tapEventData.Collider2D != null)
                         {
-                            //do nothing
+                            if (isHitOnLayer2D && hitTransform2D == tapEventData.Collider2D.transform && tapEventData.IsInside)
+                            {
+                                //Tapped inside the object
+                                if (tapEventToFire == null)
+                                {
+                                    tapEventToFire = tapEventData;
+                                    hitToFire3D = default(RaycastHit);
+                                    hitToFire2D = hit2D;
+                                    hitToFire2DEventSystem = default(RaycastResult);
+
+                                    #if ENABLE_DEBUGGING
+                                    Log.Debug("TouchEventManager", "Double-Tap Event Found 2D. itemCollider: {0}, callback: {1}, SortingLayer: {2}, isTapInside: {3} ",hitTransform2D, tapEventData.TapCallback, tapEventData.SortingLayer, tapEventData.IsInside);
+                                    #endif
+                                }
+                                else
+                                {
+                                    if (tapEventData.SortingLayer > tapEventToFire.SortingLayer ||
+                                        (tapEventToFire.SortingLayer == tapEventData.SortingLayer && !tapEventToFire.IsInside))
+                                    {
+                                        tapEventToFire = tapEventData;
+                                        hitToFire3D = default(RaycastHit);
+                                        hitToFire2D = hit2D;
+                                        hitToFire2DEventSystem = default(RaycastResult);
+
+                                        #if ENABLE_DEBUGGING
+                                        Log.Debug("TouchEventManager", "Double-Tap Event Found 2D. itemCollider: {0}, callback: {1}, SortingLayer: {2}, isTapInside: {3} ",hitTransform2D, tapEventData.TapCallback, tapEventData.SortingLayer, tapEventData.IsInside);
+                                        #endif
+                                    }
+                                    else
+                                    {
+                                        //do nothing
+                                    }
+                                }
+
+                            }
+                            else if ((!isHitOnLayer2D || hitTransform2D != tapEventData.Collider2D.transform) && !tapEventData.IsInside)
+                            {
+                                //Tapped outside the object
+                                if (tapEventToFire == null)
+                                {
+                                    tapEventToFire = tapEventData;
+                                    hitToFire3D = default(RaycastHit);
+                                    hitToFire2D = hit2D;
+                                    hitToFire2DEventSystem = default(RaycastResult);
+
+                                    #if ENABLE_DEBUGGING
+                                    Log.Debug("TouchEventManager", "Double-Tap Event Found 2D. itemCollider: {0}, callback: {1}, SortingLayer: {2}, isTapInside: {3} ",hitTransform2D, tapEventData.TapCallback, tapEventData.SortingLayer, tapEventData.IsInside);
+                                    #endif
+                                }
+                                else
+                                {
+                                    if (tapEventData.SortingLayer > tapEventToFire.SortingLayer)
+                                    {
+                                        tapEventToFire = tapEventData;
+                                        hitToFire3D = default(RaycastHit);
+                                        hitToFire2D = hit2D;
+                                        hitToFire2DEventSystem = default(RaycastResult);
+
+                                        #if ENABLE_DEBUGGING
+                                        Log.Debug("TouchEventManager", "Double-Tap Event Found 2D. itemCollider: {0}, callback: {1}, SortingLayer: {2}, isTapInside: {3} ",hitTransform2D, tapEventData.TapCallback, tapEventData.SortingLayer, tapEventData.IsInside);
+                                        #endif
+                                    }
+                                    else
+                                    {
+                                        //do nothing
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                //do nothing
+                            }
                         }
+
+                        #if UNITY_4_6 || UNITY_5 || UNITY_5_3_OR_NEWER
+                        //2D UI Hit Check using EventSystem
+                        if (tapEventData.RectTransform != null)
+                        {
+                            if (isHitOnLayer2DEventSystem && hitTransform2DEventSystem == tapEventData.RectTransform.transform && tapEventData.IsInside)
+                            {
+                                //Tapped inside the object
+                                if (tapEventToFire == null)
+                                {
+                                    tapEventToFire = tapEventData;
+                                    hitToFire3D = default(RaycastHit);
+                                    hitToFire2D = default(RaycastHit2D);
+                                    hitToFire2DEventSystem = hit2DEventSystem;
+
+                                    #if ENABLE_DEBUGGING
+                                    Log.Debug("TouchEventManager", "Double-Tap Event Found 2D Event System. itemCollider: {0}, callback: {1}, SortingLayer: {2}, isTapInside: {3} ",hitTransform2DEventSystem, tapEventData.TapCallback, tapEventData.SortingLayer, tapEventData.IsInside);
+                                    #endif
+                                } 
+                                else
+                                {
+                                    if (tapEventData.SortingLayer > tapEventToFire.SortingLayer ||
+                                        (tapEventToFire.SortingLayer == tapEventData.SortingLayer && !tapEventToFire.IsInside))
+                                    {
+                                        tapEventToFire = tapEventData;
+                                        hitToFire3D = default(RaycastHit);
+                                        hitToFire2D = default(RaycastHit2D);
+                                        hitToFire2DEventSystem = hit2DEventSystem;
+
+                                        #if ENABLE_DEBUGGING
+                                        Log.Debug("TouchEventManager", "Double-Tap Event Found 2D Event System. itemCollider: {0}, callback: {1}, SortingLayer: {2}, isTapInside: {3} ",hitTransform2DEventSystem, tapEventData.TapCallback, tapEventData.SortingLayer, tapEventData.IsInside);
+                                        #endif
+                                    } else
+                                    {
+                                        //do nothing
+                                    }
+                                }
+
+                            } 
+                            else if ((!isHitOnLayer2DEventSystem || hitTransform2DEventSystem != tapEventData.RectTransform.transform) && !tapEventData.IsInside)
+                            {
+                                //Tapped outside the object
+                                if (tapEventToFire == null)
+                                {
+                                    tapEventToFire = tapEventData;
+                                    hitToFire3D = default(RaycastHit);
+                                    hitToFire2D = default(RaycastHit2D);
+                                    hitToFire2DEventSystem = hit2DEventSystem;
+
+                                    #if ENABLE_DEBUGGING
+                                    Log.Debug("TouchEventManager", "Double-Tap Event Found 2D Event System. itemCollider: {0}, callback: {1}, SortingLayer: {2}, isTapInside: {3} ",hitTransform2DEventSystem, tapEventData.TapCallback, tapEventData.SortingLayer, tapEventData.IsInside);
+                                    #endif
+                                } else
+                                {
+                                    if (tapEventData.SortingLayer > tapEventToFire.SortingLayer)
+                                    {
+                                        tapEventToFire = tapEventData;
+                                        hitToFire3D = default(RaycastHit);
+                                        hitToFire2D = default(RaycastHit2D);
+                                        hitToFire2DEventSystem = hit2DEventSystem;
+
+                                        #if ENABLE_DEBUGGING
+                                        Log.Debug("TouchEventManager", "Double-Tap Event Found 2D Event System. itemCollider: {0}, callback: {1}, SortingLayer: {2}, isTapInside: {3} ",hitTransform2DEventSystem, tapEventData.TapCallback, tapEventData.SortingLayer, tapEventData.IsInside);
+                                        #endif
+                                    } else
+                                    {
+                                        //do nothing
+                                    }
+                                }
+                            } else
+                            {
+                                //do nothing
+                            }
+                        }
+                        #endif
+
                     }
-
                 }
 
                 if (tapEventToFire != null)
-                    EventManager.Instance.SendEvent(tapEventToFire.TapCallback, m_DoubleTapGesture, hitToFire);
+                    EventManager.Instance.SendEvent(tapEventToFire.TapCallback, m_DoubleTapGesture, hitToFire3D, hitToFire2D, hitToFire2DEventSystem);
 
                 EventManager.Instance.SendEvent("OnDoubleTap", m_DoubleTapGesture);
             }
-
         }
 
         #endregion
@@ -1349,9 +1917,9 @@ namespace IBM.Watson.DeveloperCloud.Utilities
         {
             if (m_Active)
             {
-#if ENABLE_DEBUGGING
+                #if ENABLE_DEBUGGING
                 Log.Debug("TouchEventManager", "ThreeTapGesture_Tapped: {0} - {1}", m_ThreeTapGesture.ScreenPosition, m_ThreeTapGesture.NumTouches);
-#endif
+                #endif
                 EventManager.Instance.SendEvent("OnTripleTap", m_ThreeTapGesture);
             }
         }
@@ -1362,9 +1930,9 @@ namespace IBM.Watson.DeveloperCloud.Utilities
 
         private void PressGesturePressed(object sender, System.EventArgs e)
         {
-#if ENABLE_DEBUGGING
+            #if ENABLE_DEBUGGING
             Log.Debug("TouchEventManager", "PressGesturePressed: {0} - {1}", m_PressGesture.ScreenPosition, m_PressGesture.NumTouches);
-#endif
+            #endif
 
             EventManager.Instance.SendEvent("OnTouchPressedFullscreen", m_PressGesture);
         }
@@ -1375,9 +1943,9 @@ namespace IBM.Watson.DeveloperCloud.Utilities
 
         private void LongPressGesturePressed(object sender, System.EventArgs e)
         {
-#if ENABLE_DEBUGGING
+            #if ENABLE_DEBUGGING
             Log.Debug("TouchEventManager", "LongPressGesturePressed: {0} - {1}", m_LongPressGesture.ScreenPosition, m_LongPressGesture.NumTouches);
-#endif
+            #endif
 
             EventManager.Instance.SendEvent("OnLongPressOneFinger", m_LongPressGesture);
         }
@@ -1388,9 +1956,9 @@ namespace IBM.Watson.DeveloperCloud.Utilities
 
         private void ReleaseGestureReleased(object sender, System.EventArgs e)
         {
-#if ENABLE_DEBUGGING
+            #if ENABLE_DEBUGGING
             Log.Debug("TouchEventManager", "ReleaseGestureReleased: {0} - {1}", m_ReleaseGesture.ScreenPosition, m_ReleaseGesture.NumTouches);
-#endif
+            #endif
 
             EventManager.Instance.SendEvent("OnTouchReleasedFullscreen", m_ReleaseGesture);
         }
