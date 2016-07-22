@@ -545,7 +545,7 @@ namespace IBM.Watson.DeveloperCloud.Utilities
                                 continue;
                             }
 
-                            bool hasDragOnObject = false;
+                            //bool hasDragOnObject = false;
                             //If we can drag the object, we should check that whether there is a raycast or not!
 
                             //3d Hit Check
