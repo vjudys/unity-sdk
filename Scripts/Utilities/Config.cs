@@ -156,6 +156,12 @@ namespace IBM.Watson.DeveloperCloud.Utilities
 		/// <value>The auth token.</value>
 		[fsIgnore]
 		public string AuthToken { get; set; }
+		/// <summary>
+		/// Refresh token obtained from Azure AD. Used to generate an Azure Token.
+		/// </summary>
+		/// <value>The refresh token.</value>
+		[fsIgnore]
+		public string RefreshToken { get; set;}
         #endregion
 
         /// <summary>
