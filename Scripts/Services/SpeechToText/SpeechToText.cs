@@ -344,7 +344,9 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
 #if ENABLE_DEBUGGING
                     Log.Debug("SpeechToText", "Sending keep alive.");
 #endif
-                    m_ListenSocket.Send(new WSConnector.TextMessage(Json.Serialize(nop)));
+					if (m_ListenSocket != null)
+						m_ListenSocket.Send(new WSConnector.TextMessage(Json.Serialize(nop)));
+					
                     m_LastKeepAlive = DateTime.Now;
                 }
             }
