@@ -413,6 +413,18 @@ namespace IBM.Watson.DeveloperCloud.DataTypes
         }
     };
 
+	public class SpeechToTextModelsData : Widget.Data
+	{
+		public SpeechToTextModelsData()
+		{ }
+
+		public SpeechToTextModelsData(SpeechModel[] speechModels)
+		{
+		}
+
+
+	};
+
     /// <summary>
     /// This class is for Natural Language Classify results.
     /// </summary>
