@@ -124,11 +124,11 @@ namespace IBM.Watson.DeveloperCloud.Widgets
             }
         }
 
-		public Voices SpeechVoices 
+		public Voice[] TextVoices 
 		{
 			get {
 				if (m_TextToSpeech != null)
-					return m_TextToSpeech.Voices;
+					return m_TextToSpeech.Voices.voices;
 				else
 					return null;
 			}

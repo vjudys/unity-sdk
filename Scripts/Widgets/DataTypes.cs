@@ -200,7 +200,39 @@ namespace IBM.Watson.DeveloperCloud.DataTypes
         public bool Boolean { get; set; }
     };
 
-    /// <summary>
+	/// <summary>
+	/// This class holds a voice name.
+	/// </summary>
+	public class VoiceNameData : Widget.Data
+	{
+		/// <summary>
+		/// Default constructor.
+		/// </summary>
+		public VoiceNameData()
+		{ }
+		/// <summary>
+		/// Data constructor.
+		/// </summary>
+		public VoiceNameData(string s)
+		{
+			Voice = s;
+		}
+		/// <summary>
+		/// Name of this data type.
+		/// </summary>
+		/// <returns>The readable name.</returns>
+		public override string GetName()
+		{
+			return "VoiceName";
+		}
+
+		/// <summary>
+		/// The string value.
+		/// </summary>
+		public string Voice { get; set; }
+	};
+
+	/// <summary>
     /// Boolean state sent when TextToSpeech starts and ends playing audio.
     /// </summary>
     public class SpeakingStateData : Widget.Data
@@ -413,18 +445,6 @@ namespace IBM.Watson.DeveloperCloud.DataTypes
         }
     };
 
-	public class SpeechToTextModelsData : Widget.Data
-	{
-		public SpeechToTextModelsData()
-		{ }
-
-		public SpeechToTextModelsData(SpeechModel[] speechModels)
-		{
-		}
-
-
-	};
-
     /// <summary>
     /// This class is for Natural Language Classify results.
     /// </summary>
@@ -457,4 +477,39 @@ namespace IBM.Watson.DeveloperCloud.DataTypes
         /// </summary>
         public ClassifyResult Result { get; set; }
     };
+
+	/// <summary>
+	/// SpeechToText models' data.
+	/// </summary>
+	public class SpeechToTextModelsData : Widget.Data
+	{
+		/// <summary>
+		/// Default constructor.
+		/// </summary>
+		public SpeechToTextModelsData()
+		{ }
+
+		/// <summary>
+		/// Data constructor.
+		/// </summary>
+		public SpeechToTextModelsData(SpeechModel[] speechModels)
+		{
+			SpeechModels = speechModels;
+		}
+
+		/// <summary>
+		/// Name of this data type.
+		/// </summary>
+		/// <returns>The readable name.</returns>
+		public override string GetName()
+		{
+			return "SpeechToTextModels";
+		}
+
+		/// <summary>
+		/// Gets or sets the speech models.
+		/// </summary>
+		/// <value>The speech models.</value>
+		public SpeechModel[] SpeechModels { get; set; }
+	};
 }
