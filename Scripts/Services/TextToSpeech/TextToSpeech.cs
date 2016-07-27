@@ -242,6 +242,35 @@ namespace IBM.Watson.DeveloperCloud.Services.TextToSpeech.v1
         }
         #endregion
 
+		#region Convert to VoiceType from string
+		public void SetVoiceByName(string newVoiceName)
+		{
+			foreach (VoiceType type in m_VoiceTypes.Keys)
+			{
+				string voiceName = m_VoiceTypes [type];
+				if (voiceName == newVoiceName)
+				{
+					m_Voice = type;
+					return;
+				}
+			}
+			m_Voice = VoiceType.en_US_Michael;
+		}
+
+		public VoiceType GetVoiceFromName(string newVoiceName)
+		{
+			foreach (VoiceType type in m_VoiceTypes.Keys)
+			{
+				string voiceName = m_VoiceTypes [type];
+				if (voiceName == newVoiceName)
+				{
+					return type;
+				}
+			}
+			return VoiceType.en_US_Michael;
+		}
+		#endregion
+
         #region ToSpeech Functions
 
         /// <summary>

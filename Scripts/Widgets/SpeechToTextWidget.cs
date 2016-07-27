@@ -45,6 +45,10 @@ namespace IBM.Watson.DeveloperCloud.Widgets
         private Output m_ResultOutput = new Output( typeof(SpeechToTextData), true );
         #endregion
 
+		#region Public Properties
+		public Input LanguageInput { get { return m_LanguageInput; } }
+		#endregion
+
 	    #region Private Data
 		private SpeechToText m_SpeechToText = null;
 	    [SerializeField]
@@ -148,10 +152,10 @@ namespace IBM.Watson.DeveloperCloud.Widgets
 	    {
             base.Start();
 
-			if (Config.Instance.ConfigLoaded)
-			{
-				m_Language = Config.Instance.GetVariableValue("STT_LANGUAGE");
-			}
+			// Retrieve language settings from preferences
+			string newLanguage = PlayerPrefs.GetString("SttModel", null);
+			if (!string.IsNullOrEmpty(newLanguage))
+				m_Language = newLanguage;
 
 	        if ( m_StatusText != null )
 	            m_StatusText.text = "READY";

@@ -38,6 +38,8 @@ namespace IBM.Watson.DeveloperCloud.Widgets
         private Input m_TextInput = new Input("Text", typeof(TextToSpeechData), "OnTextInput");
         [SerializeField]
         private Input m_VoiceInput = new Input("Voice", typeof(VoiceData), "OnVoiceSelect");
+		[SerializeField] 
+		private Input m_VoiceNameInput = new Input("VoiceName", typeof(VoiceNameData), "OnNewVoice");
         #endregion
 
         #region Outputs
@@ -108,7 +110,9 @@ namespace IBM.Watson.DeveloperCloud.Widgets
 		[Tooltip("A name of the method for GetModels API")]
 		public string ApiVoicesName; 		// "/getTTSVoiceModels"
 
-        /// <summary>
+		public Input VoiceNameInput { get { return m_VoiceNameInput; } }
+
+		/// <summary>
         /// Gets or sets the voice. Default voice is English, US - Michael
         /// </summary>
         /// <value>The voice.</value>
@@ -161,11 +165,18 @@ namespace IBM.Watson.DeveloperCloud.Widgets
         /// </summary>
         public void OnTextToSpeech()
         {
-            if (m_TextToSpeech.Voice != m_Voice)
-                m_TextToSpeech.Voice = m_Voice;
+			if (m_TextToSpeech.Voice != m_Voice)
+			{
+				m_TextToSpeech.Voice = m_Voice;
+				string newVoice = PlayerPrefs.GetString("TtsVoice", null);
+				if (!string.IsNullOrEmpty(newVoice))
+					m_TextToSpeech.SetVoiceByName(newVoice);
+			}
+			
             if (m_Input != null)
                 m_SpeechQueue.Enqueue(new Speech(m_TextToSpeech, m_Input.text, m_UsePost));
-            if (m_StatusText != null)
+            
+			if (m_StatusText != null)
                 m_StatusText.text = "THINKING";
             if (m_TextToSpeechButton != null)
                 m_TextToSpeechButton.interactable = false;
@@ -181,8 +192,13 @@ namespace IBM.Watson.DeveloperCloud.Widgets
 
             if (!string.IsNullOrEmpty(text.Text))
             {
-                if (m_TextToSpeech.Voice != m_Voice)
-                    m_TextToSpeech.Voice = m_Voice;
+				if (m_TextToSpeech.Voice != m_Voice)
+				{
+					m_TextToSpeech.Voice = m_Voice;
+					string newVoice = PlayerPrefs.GetString("TtsVoice", null);
+					if (!string.IsNullOrEmpty(newVoice))
+						m_TextToSpeech.SetVoiceByName(newVoice);
+				}
 
                 m_SpeechQueue.Enqueue(new Speech(m_TextToSpeech, text.Text, m_UsePost));
             }
@@ -196,6 +212,15 @@ namespace IBM.Watson.DeveloperCloud.Widgets
 
             m_Voice = voice.Voice;
         }
+
+		private void OnNewVoice(Data data)
+		{
+			VoiceNameData voiceName = data as VoiceNameData;
+			if (voiceName == null)
+				throw new WatsonException ("Unexpected data type");
+
+			m_Voice = m_TextToSpeech.GetVoiceFromName(voiceName.Voice);
+		}
 
         private void OnEnable()
         {
