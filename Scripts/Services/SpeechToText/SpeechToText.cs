@@ -411,7 +411,7 @@ namespace IBM.Watson.DeveloperCloud.Services.SpeechToText.v1
 				// by LISTEN_TIMEOUT. If not, then stop listening and record the error.
 				if (!m_ListenActive && (DateTime.Now - m_LastStartSent).TotalSeconds > LISTEN_TIMEOUT)
 				{
-					Log.Error("SpeechToText", "Failed to enter listening state.");
+					Log.Warning("SpeechToText", "Failed to enter listening state.");
 
 					StopListening();
 					if (OnError != null)
