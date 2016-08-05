@@ -98,8 +98,9 @@ namespace IBM.Watson.DeveloperCloud.Widgets
         /// </summary>
         public bool Active
         {
-            get { return m_SpeechToText.IsListening; }
-            set {
+			get { return (m_SpeechToText != null) ? m_SpeechToText.IsListening : false; }
+            set 
+			{
                 if ( value && !m_SpeechToText.IsListening )
                 {
  	                m_SpeechToText.DetectSilence = m_DetectSilence;
