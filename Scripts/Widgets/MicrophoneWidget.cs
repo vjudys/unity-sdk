@@ -86,6 +86,7 @@ namespace IBM.Watson.DeveloperCloud.Widgets
         /// Returns a list of available microphone devices.
         /// </summary>
         public string[] Microphones { get { return Microphone.devices; } }
+
         /// <summary>
         /// True if microphone is active, false if inactive.
         /// </summary>
@@ -187,11 +188,10 @@ namespace IBM.Watson.DeveloperCloud.Widgets
         }
         private void Update()
         {
-            if (Failure && Active && !Disable
-                && (DateTime.Now - m_LastFailure).TotalMilliseconds > RETRY_INTERVAL)
+            if (Failure && Active && !Disable && (DateTime.Now - m_LastFailure).TotalMilliseconds > RETRY_INTERVAL)
             {
-                // try to restart the recording..
-                StartRecording();
+                    // try to restart the recording..
+                    StartRecording();
             }
         }
         private void OnDisableInput(Data data)
@@ -210,15 +210,19 @@ namespace IBM.Watson.DeveloperCloud.Widgets
         #region Recording Functions
         private void StartRecording()
         {
-            if (m_RecordingRoutine == 0)
+            // checks if microphone exists, if none then skips recording
+            if (Microphones.Length > 0)
             {
-                UnityObjectUtil.StartDestroyQueue();
+                if (m_RecordingRoutine == 0)
+                {
+                    UnityObjectUtil.StartDestroyQueue();
 
-                m_RecordingRoutine = Runnable.Run(RecordingHandler());
-                m_ActivateOutput.SendData(new BooleanData(true));
+                    m_RecordingRoutine = Runnable.Run(RecordingHandler());
+                    m_ActivateOutput.SendData(new BooleanData(true));
 
-                if (m_StatusText != null)
-                    m_StatusText.text = "RECORDING";
+                    if (m_StatusText != null)
+                        m_StatusText.text = "RECORDING";
+                }
             }
         }
 
