@@ -15,13 +15,13 @@
 *
 */
 
-using System.Collections.Generic;
-using IBM.Watson.DeveloperCloud.DataTypes;
-using IBM.Watson.DeveloperCloud.Logging;
-using IBM.Watson.DeveloperCloud.Services.TextToSpeech.v1;
-using IBM.Watson.DeveloperCloud.Utilities;
 using UnityEngine;
 using UnityEngine.UI;
+using IBM.Watson.DeveloperCloud.Services.TextToSpeech.v1;
+using IBM.Watson.DeveloperCloud.Logging;
+using IBM.Watson.DeveloperCloud.DataTypes;
+using System.Collections.Generic;
+using IBM.Watson.DeveloperCloud.Utilities;
 
 #pragma warning disable 414
 
@@ -38,8 +38,6 @@ namespace IBM.Watson.DeveloperCloud.Widgets
         private Input m_TextInput = new Input("Text", typeof(TextToSpeechData), "OnTextInput");
         [SerializeField]
         private Input m_VoiceInput = new Input("Voice", typeof(VoiceData), "OnVoiceSelect");
-		[SerializeField] 
-		private Input m_VoiceNameInput = new Input("VoiceName", typeof(VoiceNameData), "OnNewVoice");
         #endregion
 
         #region Outputs
@@ -52,7 +50,7 @@ namespace IBM.Watson.DeveloperCloud.Widgets
         #endregion
 
         #region Private Data
-		TextToSpeech m_TextToSpeech = null;
+        TextToSpeech m_TextToSpeech = new TextToSpeech();
 
         [SerializeField, Tooltip("How often to send level out data in seconds.")]
         private float m_LevelOutInterval = 0.05f;
@@ -100,19 +98,9 @@ namespace IBM.Watson.DeveloperCloud.Widgets
         private Speech m_ActiveSpeech = null;
         #endregion
 
-        #region Public Properties
-		[Tooltip("A name of the service to use instead of default SpeechToTextV1")]
-		public string ServiceName;			// "XRayWebSocketV1"
+        #region Public Memebers
 
-		[Tooltip("A name of the method for Recognize API")]
-		public string ApiSynthesizeName;	// "/tts-service"
-
-		[Tooltip("A name of the method for GetModels API")]
-		public string ApiVoicesName; 		// "/getTTSVoiceModels"
-
-		public Input VoiceNameInput { get { return m_VoiceNameInput; } }
-
-		/// <summary>
+        /// <summary>
         /// Gets or sets the voice. Default voice is English, US - Michael
         /// </summary>
         /// <value>The voice.</value>
@@ -128,55 +116,19 @@ namespace IBM.Watson.DeveloperCloud.Widgets
             }
         }
 
-		public Voice[] TextVoices 
-		{
-			get {
-				if (m_TextToSpeech != null)
-					return m_TextToSpeech.Voices.voices;
-				else
-					return null;
-			}
-		}
         #endregion
 
-		#region Widget Interface
-		/// <exclude />
-		protected override string GetName()
-		{
-			return "TextToSpeech";
-		}
-
-		protected override void Awake()
-		{
-			base.Awake();
-			m_TextToSpeech = new TextToSpeech(ServiceName, ApiSynthesizeName, ApiVoicesName);
-		}
-		#endregion
-
         #region Event Handlers
-		public void OnGetVoices(Voices voices)
-		{
-			Log.Status("TextToSpeechWidget", "Got this voices: {0} ", voices.voices);
-
-		}
-
         /// <summary>
         /// Button event handler.
         /// </summary>
         public void OnTextToSpeech()
         {
-			if (m_TextToSpeech.Voice != m_Voice)
-			{
-				m_TextToSpeech.Voice = m_Voice;
-				string newVoice = PlayerPrefs.GetString("TtsVoice", null);
-				if (!string.IsNullOrEmpty(newVoice))
-					m_TextToSpeech.SetVoiceByName(newVoice);
-			}
-			
+            if (m_TextToSpeech.Voice != m_Voice)
+                m_TextToSpeech.Voice = m_Voice;
             if (m_Input != null)
                 m_SpeechQueue.Enqueue(new Speech(m_TextToSpeech, m_Input.text, m_UsePost));
-            
-			if (m_StatusText != null)
+            if (m_StatusText != null)
                 m_StatusText.text = "THINKING";
             if (m_TextToSpeechButton != null)
                 m_TextToSpeechButton.interactable = false;
@@ -192,13 +144,8 @@ namespace IBM.Watson.DeveloperCloud.Widgets
 
             if (!string.IsNullOrEmpty(text.Text))
             {
-				if (m_TextToSpeech.Voice != m_Voice)
-				{
-					m_TextToSpeech.Voice = m_Voice;
-					string newVoice = PlayerPrefs.GetString("TtsVoice", null);
-					if (!string.IsNullOrEmpty(newVoice))
-						m_TextToSpeech.SetVoiceByName(newVoice);
-				}
+                if (m_TextToSpeech.Voice != m_Voice)
+                    m_TextToSpeech.Voice = m_Voice;
 
                 m_SpeechQueue.Enqueue(new Speech(m_TextToSpeech, text.Text, m_UsePost));
             }
@@ -213,15 +160,6 @@ namespace IBM.Watson.DeveloperCloud.Widgets
             m_Voice = voice.Voice;
         }
 
-		private void OnNewVoice(Data data)
-		{
-			VoiceNameData voiceName = data as VoiceNameData;
-			if (voiceName == null)
-				throw new WatsonException ("Unexpected data type");
-
-			m_Voice = m_TextToSpeech.GetVoiceFromName(voiceName.Voice);
-		}
-
         private void OnEnable()
         {
             UnityObjectUtil.StartDestroyQueue();
@@ -235,10 +173,6 @@ namespace IBM.Watson.DeveloperCloud.Widgets
         {
             base.Start();
             m_Source = GetComponent<AudioSource>();
-
-			// Retrieve service voices
-			if (!m_TextToSpeech.GetVoices(OnGetVoices))
-				Log.Error( "TextToSpeechWidget", "Failed to obtain voices." );
         }
 
         private void Update()
@@ -308,6 +242,13 @@ namespace IBM.Watson.DeveloperCloud.Widgets
 
             m_ActiveSpeech = null;
         }
+
+        /// <exclude />
+        protected override string GetName()
+        {
+            return "TextToSpeech";
+        }
         #endregion
     }
+
 }

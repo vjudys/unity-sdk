@@ -15,10 +15,7 @@
 *
 */
 
-#define ENABLE_DEBUGGING
-
 using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
 using IBM.Watson.DeveloperCloud.Connection;
 using IBM.Watson.DeveloperCloud.Utilities;
@@ -34,21 +31,10 @@ namespace IBM.Watson.DeveloperCloud.Services.TextToSpeech.v1
     /// This class wraps the TextToSpeech service.
     /// <a href="http://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/text-to-speech.html">TextToSpeech Service</a>
     /// </summary>
-    public class TextToSpeech 
-#if TTS_WATSON_SERVICE
-		: IWatsonService
-#endif
+    public class TextToSpeech : IWatsonService
     {
-		#region Constants
-		/// <summary>
-		/// This ID is used to match up a configuration record with this service.
-		/// </summary>
-		private const string SERVICE_ID = "TextToSpeechV1";
-		private const string API_SINTHESIZE = "/v1/synthesize";
-		private const string API_VOICES = "/v1/voices";
-		#endregion
+        #region Public Types
 
-		#region Public Types
         /// <summary>
         /// This callback is passed into the ToSpeech() method.
         /// </summary>
@@ -59,18 +45,11 @@ namespace IBM.Watson.DeveloperCloud.Services.TextToSpeech.v1
         /// </summary>
         /// <param name="voices">The Voices object.</param>
         public delegate void GetVoicesCallback(Voices voices);
+
         #endregion
 
         #region Private Data
-		private string m_Service = SERVICE_ID; // The name of TTS service
-		private string m_ApiSynthesize = API_SINTHESIZE; // The name of Synthesize method
-		private string m_ApiVoices = API_VOICES; // The name of Voices method
-
         private DataCache m_SpeechCache = null;
-
-		// A list of voices that is supported by the service
-		private Voices m_voices = new Voices();
-
         private VoiceType m_Voice = VoiceType.en_US_Michael;
         private AudioFormatType m_AudioFormat = AudioFormatType.WAV;
         private Dictionary<VoiceType, string> m_VoiceTypes = new Dictionary<VoiceType, string>()
@@ -94,23 +73,9 @@ namespace IBM.Watson.DeveloperCloud.Services.TextToSpeech.v1
             { AudioFormatType.WAV, "audio/wav" },
             { AudioFormatType.FLAC, "audio/flac" },
         };
-#if USE_FULL_DESERIALIZATION
+        private const string SERVICE_ID = "TextToSpeechV1";
         private static fsSerializer sm_Serializer = new fsSerializer();
-#endif
         #endregion
-
-		#region Initialization
-		public TextToSpeech(string serviceName = null, string apiSynthesizeName = null, string apiVoicesName = null)
-		{
-			// Override standard service ID and API with XRay specific
-			m_Service = (!string.IsNullOrEmpty(serviceName)) ? serviceName : SERVICE_ID;
-			m_ApiSynthesize = (!string.IsNullOrEmpty(apiSynthesizeName)) ? apiSynthesizeName : API_SINTHESIZE;
-			m_ApiVoices = (!string.IsNullOrEmpty(apiVoicesName)) ? apiVoicesName : API_VOICES;
-#if ENABLE_DEBUGGING
-			Log.Debug("TextToSpeech", "Service created with {0}, {1}, {2}.", m_Service, m_ApiSynthesize, m_ApiVoices);
-#endif
-		}
-		#endregion
 
         #region Public Properties
         /// <summary>
@@ -136,11 +101,6 @@ namespace IBM.Watson.DeveloperCloud.Services.TextToSpeech.v1
                 }
             }
         }
-		/// <summary>
-		/// Returns all voices supported by this service
-		/// </summary>
-		/// <value>The voices.</value>
-		public Voices Voices { get { return m_voices; } }
         #endregion
 
         #region GetVoices 
@@ -154,15 +114,9 @@ namespace IBM.Watson.DeveloperCloud.Services.TextToSpeech.v1
             if (callback == null)
                 throw new ArgumentNullException("callback");
 
-			RESTConnector connector = RESTConnector.GetConnector(m_Service, m_ApiVoices);
+            RESTConnector connector = RESTConnector.GetConnector(SERVICE_ID, "/v1/voices");
             if (connector == null)
                 return false;
-
-			// Change the authentication to use Bearer token
-			if (!string.IsNullOrEmpty(Config.Instance.AuthToken))
-			{
-				connector.Authentication = new Credentials(Config.Instance.AuthToken);
-			}
 
             GetVoicesReq req = new GetVoicesReq();
             req.Callback = callback;
@@ -176,100 +130,32 @@ namespace IBM.Watson.DeveloperCloud.Services.TextToSpeech.v1
         };
         private void OnGetVoicesResp(RESTConnector.Request req, RESTConnector.Response resp)
         {
+            Voices voices = new Voices();
             if (resp.Success)
             {
                 try
                 {
-					string jsonString = Encoding.UTF8.GetString(resp.Data);
-					if (jsonString == null)
-					{
-						Log.Error("TextToSpeech", "Failed to get JSON string from response.");
-						return;
-					}
-
-#if ENABLE_DEBUGGING
-					Log.Debug("TextToSpeech", "GetModelsResponse {0}.", jsonString);
-#endif
-
-#if USE_FULL_DESERIALIZATION
-					fsData data = null;
-                    fsResult r = fsJsonParser.Parse(jsonString, out data);
+                    fsData data = null;
+                    fsResult r = fsJsonParser.Parse(Encoding.UTF8.GetString(resp.Data), out data);
                     if (!r.Succeeded)
                         throw new WatsonException(r.FormattedMessages);
 
-					object obj = m_voices;
-					r = sm_Serializer.TryDeserialize(data, obj.GetType(), ref obj);
-					if (!r.Succeeded)
-					throw new WatsonException(r.FormattedMessages);
-#else
-					List<Voice> voices = new List<Voice>();
-					IList iVoices = (IList)Json.Deserialize(jsonString);
-					if (iVoices == null)
-						throw new Exception("Expected IList in JSON: " + jsonString);
-
-					foreach (var v in iVoices)
-					{
-						IDictionary iVoice = v as IDictionary;
-						if (iVoice == null)
-							throw new Exception("Expected IDictionary");
-
-						Voice voice = new Voice();
-						voice.name = (string)iVoice["name"];
-						voice.language = (string)iVoice["language"];
-						voice.gender = (string)iVoice["gender"];
-						voice.description = (string)iVoice["description"];
-						voice.url = (string)iVoice["url"];
-
-						voices.Add(voice);
-					}
-
-					m_voices.voices = voices.ToArray();
-#endif
-
-#if ENABLE_DEBUGGING
-					Log.Debug("TextToSpeech", "GetVoices() received {0} voices: {1}.", m_voices.voices.Length, m_voices.voices);
-#endif
+                    object obj = voices;
+                    r = sm_Serializer.TryDeserialize(data, obj.GetType(), ref obj);
+                    if (!r.Succeeded)
+                        throw new WatsonException(r.FormattedMessages);
                 }
                 catch (Exception e)
                 {
-					Log.Error("TextToSpeech", "GetVoices Exception: {0}", e.ToString());
+                    Log.Error("Natural Language Classifier", "GetVoices Exception: {0}", e.ToString());
                     resp.Success = false;
                 }
             }
 
             if (((GetVoicesReq)req).Callback != null)
-                ((GetVoicesReq)req).Callback(resp.Success ? m_voices : null);
+                ((GetVoicesReq)req).Callback(resp.Success ? voices : null);
         }
         #endregion
-
-		#region Convert to VoiceType from string
-		public void SetVoiceByName(string newVoiceName)
-		{
-			foreach (VoiceType type in m_VoiceTypes.Keys)
-			{
-				string voiceName = m_VoiceTypes [type];
-				if (voiceName == newVoiceName)
-				{
-					m_Voice = type;
-					return;
-				}
-			}
-			m_Voice = VoiceType.en_US_Michael;
-		}
-
-		public VoiceType GetVoiceFromName(string newVoiceName)
-		{
-			foreach (VoiceType type in m_VoiceTypes.Keys)
-			{
-				string voiceName = m_VoiceTypes [type];
-				if (voiceName == newVoiceName)
-				{
-					return type;
-				}
-			}
-			return VoiceType.en_US_Michael;
-		}
-		#endregion
 
         #region ToSpeech Functions
 
@@ -309,9 +195,6 @@ namespace IBM.Watson.DeveloperCloud.Services.TextToSpeech.v1
             }
 
             text = Utility.RemoveTags(text);
-#if ENABLE_DEBUGGING
-			Log.Debug("TextToSpeech", "Synthesizing '{0}'.", text);
-#endif
 
             string textId = Utility.GetMD5(text);
             if (!DisableCache)
@@ -328,18 +211,12 @@ namespace IBM.Watson.DeveloperCloud.Services.TextToSpeech.v1
                 }
             }
 
-			RESTConnector connector = RESTConnector.GetConnector(m_Service, m_ApiSynthesize);
+            RESTConnector connector = RESTConnector.GetConnector(SERVICE_ID, "/v1/synthesize");
             if (connector == null)
             {
                 Log.Error("TextToSpeech", "Failed to get connector.");
                 return false;
             }
-
-			// Change the authentication to use Bearer token
-			if (!string.IsNullOrEmpty(Config.Instance.AuthToken))
-			{
-				connector.Authentication = new Credentials(Config.Instance.AuthToken);
-			}
 
             ToSpeechRequest req = new ToSpeechRequest();
             req.TextId = textId;
@@ -371,9 +248,7 @@ namespace IBM.Watson.DeveloperCloud.Services.TextToSpeech.v1
             if (speechReq == null)
                 throw new WatsonException("Wrong type of request object.");
 
-#if ENABLE_DEBUGGING
-			Log.Debug( "TextToSpeech", "Request completed in {0} seconds.", resp.ElapsedTime );
-#endif
+            //Log.Debug( "TextToSpeech", "Request completed in {0} seconds.", resp.ElapsedTime );
 
             AudioClip clip = resp.Success ? ProcessResponse(speechReq.TextId, resp.Data) : null;
             if (clip == null)
@@ -400,7 +275,6 @@ namespace IBM.Watson.DeveloperCloud.Services.TextToSpeech.v1
         }
         #endregion
 
-#if TTS_WATSON_SERVICE
         #region IWatsonService interface
         /// <exclude />
         public string GetServiceID()
@@ -438,6 +312,6 @@ namespace IBM.Watson.DeveloperCloud.Services.TextToSpeech.v1
             }
         };
         #endregion
-#endif
     }
+
 }

@@ -18,11 +18,11 @@
 //#define ENABLE_DEBUGGING
 
 using IBM.Watson.DeveloperCloud.DataTypes;
-using IBM.Watson.DeveloperCloud.Logging;
 using IBM.Watson.DeveloperCloud.Services.SpeechToText.v1;
-using IBM.Watson.DeveloperCloud.Utilities;
+using IBM.Watson.DeveloperCloud.Logging;
 using UnityEngine;
 using UnityEngine.UI;
+using IBM.Watson.DeveloperCloud.Utilities;
 
 #pragma warning disable 414
 
@@ -45,12 +45,8 @@ namespace IBM.Watson.DeveloperCloud.Widgets
         private Output m_ResultOutput = new Output( typeof(SpeechToTextData), true );
         #endregion
 
-		#region Public Properties
-		public Input LanguageInput { get { return m_LanguageInput; } }
-		#endregion
-
 	    #region Private Data
-		private SpeechToText m_SpeechToText = null;
+		private SpeechToText m_SpeechToText = new SpeechToText();
 	    [SerializeField]
 	    private Text m_StatusText = null;
 	    [SerializeField]
@@ -74,33 +70,13 @@ namespace IBM.Watson.DeveloperCloud.Widgets
         #endregion
 
         #region Public Properties
-		[Tooltip("A name of the service to use instead of default SpeechToTextV1")]
-		public string ServiceName;		// "XRayWebSocketV1"
-
-		[Tooltip("A name of the method for Recognize API")]
-		public string ApiRecognizeName;	// "/stt-socket"
-
-		[Tooltip("A name of the method for GetModels API")]
-		public string ApiGetModels;
-
-		public SpeechModel[] SpeechModels
-		{
-			get {
-				if (m_SpeechToText != null)
-					return m_SpeechToText.Models;
-				else
-					return null;
-			}
-		}
-
         /// <summary>
         /// This property starts or stop's this widget listening for speech.
         /// </summary>
         public bool Active
         {
-			get { return (m_SpeechToText != null) ? m_SpeechToText.IsListening : false; }
-            set 
-			{
+            get { return m_SpeechToText.IsListening; }
+            set {
                 if ( value && !m_SpeechToText.IsListening )
                 {
  	                m_SpeechToText.DetectSilence = m_DetectSilence;
@@ -111,7 +87,7 @@ namespace IBM.Watson.DeveloperCloud.Widgets
                     m_SpeechToText.EnableContinousRecognition = m_EnableContinous;
                     m_SpeechToText.EnableInterimResults = m_EnableInterimResults;
 	                m_SpeechToText.OnError = OnError;
-					m_SpeechToText.StartListening(OnRecognize);
+	                m_SpeechToText.StartListening( OnRecognize );
 	                if ( m_StatusText != null )
 	                    m_StatusText.text = "LISTENING";
                 }
@@ -131,12 +107,6 @@ namespace IBM.Watson.DeveloperCloud.Widgets
         {
             return "SpeechToText";
         }
-
-		protected override void Awake()
-		{
-			base.Awake();
-			m_SpeechToText = new SpeechToText(ServiceName, ApiRecognizeName, ApiGetModels);
-		}
         #endregion
 
         #region Event handlers
@@ -153,16 +123,9 @@ namespace IBM.Watson.DeveloperCloud.Widgets
 	    {
             base.Start();
 
-			// Retrieve language settings from preferences
-			string newLanguage = PlayerPrefs.GetString("SttModel", null);
-			if (!string.IsNullOrEmpty(newLanguage))
-				m_Language = newLanguage;
-
 	        if ( m_StatusText != null )
 	            m_StatusText.text = "READY";
-
-			// Retrieve service model that best matches our chosen language
-			if (! m_SpeechToText.GetModels( OnGetModels ) )
+            if (! m_SpeechToText.GetModels( OnGetModels ) )
                 Log.Error( "SpeechToTextWidget", "Failed to request models." );
 	    }
 
@@ -200,7 +163,7 @@ namespace IBM.Watson.DeveloperCloud.Widgets
                 if (! m_SpeechToText.GetModels( OnGetModels ) )
                     Log.Error( "SpeechToTextWidget", "Failed to rquest models." );
             }
-		}
+        }
 
         private void OnGetModels( SpeechModel [] models )
         {
