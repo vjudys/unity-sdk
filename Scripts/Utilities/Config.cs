@@ -162,6 +162,7 @@ namespace IBM.Watson.DeveloperCloud.Utilities
 		/// <value>The refresh token.</value>
 		[fsIgnore]
 		public string RefreshToken { get; set;}
+
         #endregion
 
         /// <summary>
@@ -357,11 +358,15 @@ namespace IBM.Watson.DeveloperCloud.Utilities
 
         private IEnumerator LoadConfigCR()
         {
+#if UNITY_EDITOR || UNITY_STANDALONE_WIN
+            // load the config using WWWProxy as most MS devices will need proxys
+            WWWProxy request = new WWWProxy(Application.streamingAssetsPath + Constants.Path.CONFIG_FILE);
+#else
             // load the config using WWW, since this works on all platforms..
             WWW request = new WWW(Application.streamingAssetsPath + Constants.Path.CONFIG_FILE);
+#endif
             while (!request.isDone)
                 yield return null;
-
             LoadConfig(request.text);
             yield break;
         }

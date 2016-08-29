@@ -23,6 +23,15 @@ public class ConfigLoader : MonoBehaviour
 
     IEnumerator Start()
     {
+        /*
+        // Very rudementry way of getting all builds to be low res, this is not very effective, but needed for Surface Distribution, until we have some time to implement a "clever" solution
+        QualitySettings.SetQualityLevel(1);
+        if ((QualitySettings.names[QualitySettings.GetQualityLevel()] == "LoRes") || (QualitySettings.names[QualitySettings.GetQualityLevel()] == "Tablet"))
+        {
+            Screen.SetResolution (1440, 900, true, 60);
+        }
+        */
+
         // wait for the configuration to be loaded first..
         while (!Config.Instance.ConfigLoaded)
             yield return null;
@@ -46,6 +55,4 @@ public class ConfigLoader : MonoBehaviour
         }
         StartCoroutine(Start());
     }
-
-
 }

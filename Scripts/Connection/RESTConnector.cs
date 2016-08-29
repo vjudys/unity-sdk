@@ -374,7 +374,11 @@ namespace IBM.Watson.DeveloperCloud.Connection
                 DateTime startTime = DateTime.Now;
                 if (!req.Delete)
                 {
+#if UNITY_IOS
                     WWW www = null;
+#elif UNITY_STANDALONE_WIN
+                    WWWProxy www = null;
+#endif
                     if (req.Forms != null)
                     {
                         if (req.Send != null)
@@ -401,12 +405,34 @@ namespace IBM.Watson.DeveloperCloud.Connection
                         {
                             Log.Error("RESTConnector", "Exception when initializing WWWForm: {0}", e.ToString());
                         }
+#if UNITY_IOS
                         www = new WWW(url, form.data, req.Headers);
+#elif UNITY_STANDALONE_WIN
+                        www = new WWWProxy(url, form.data, req.Headers);
+                        www.InitProxy("proxy.wde.woodside.com.au", 8080);
+                        www.GetData();
+#endif
                     }
                     else if (req.Send == null)
+                    {
+#if UNITY_IOS
                         www = new WWW(url, null, req.Headers);
+#elif UNITY_STANDALONE_WIN
+                        www = new WWWProxy(url, null, req.Headers);
+                        www.InitProxy("proxy.wde.woodside.com.au", 8080);
+                        www.GetData();
+#endif
+                    }
                     else
+                    {
+#if UNITY_IOS
                         www = new WWW(url, req.Send, req.Headers);
+#elif UNITY_STANDALONE_WIN
+                        www = new WWWProxy(url, req.Send, req.Headers);
+                        www.InitProxy ("proxy.wde.woodside.com.au", 8080);
+                        www.GetData();
+#endif
+                    }
 
 #if ENABLE_DEBUGGING
                     Log.Debug("RESTCOnnector", "URL: {0}", url);
