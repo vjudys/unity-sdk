@@ -392,17 +392,17 @@ namespace IBM.Watson.DeveloperCloud.Connection
                 {
                     Log.Error("RESTConnector", "Exception when initializing WWWForm: {0}", e.ToString());
                 }
-                http = new HTTPRequest(new Uri(url), HTTPMethods.Post);
+                http = new HTTPRequest(new Uri(url), HTTPMethods.Post, HTTPRequectComplete);
                 http.RawData = form.data;
             }
             else if (req.Send == null)
             {
-                http = new HTTPRequest(new Uri(url), HTTPMethods.Post);
+                http = new HTTPRequest(new Uri(url), HTTPMethods.Post, HTTPRequectComplete);
                 http.RawData = null;
             }
             else
             {
-                http = new HTTPRequest(new Uri(url), HTTPMethods.Post);
+                http = new HTTPRequest(new Uri(url), HTTPMethods.Post, HTTPRequectComplete);
                 http.RawData = req.Send;
             }
 
@@ -415,6 +415,7 @@ namespace IBM.Watson.DeveloperCloud.Connection
             // setting up the header
             if( req.Headers.Count > 0)
             {
+                http.SetHeader("","");
                 foreach(KeyValuePair<string,string> kvp in req.Headers)
                 {
                     http.AddHeader(kvp.Key, kvp.Value);
@@ -422,6 +423,26 @@ namespace IBM.Watson.DeveloperCloud.Connection
             }
 
             return http;
+        }
+
+        private void HTTPRequectComplete (HTTPRequest request, HTTPResponse responce)
+        {
+            Log.Error("http",responce.DataAsText, responce);
+            Log.Error("http",request.Exception.Message, responce);
+
+            Response resp = new Response();
+
+            if (responce != null)
+            {
+                resp.Data = responce.Data;
+                resp.Success = true;
+                resp.ElapsedTime = 0f;
+            }
+            else
+            {
+            }
+
+
         }
 
         private IEnumerator ProcessRequestQueueProxy()
@@ -452,7 +473,7 @@ namespace IBM.Watson.DeveloperCloud.Connection
                     HTTPRequest http = InitHttpRequest(req, url);
                     
                     http.Send();
-
+                    /*
                     #if ENABLE_DEBUGGING
                     Log.Debug("RESTCOnnector BestHTTP", "URL: {0}", url);
                     #endif
@@ -514,13 +535,13 @@ namespace IBM.Watson.DeveloperCloud.Connection
                         resp.Success = true;
                         resp.Data = http.Response.Data;
                     }
-                    /*
-                    else if (!bError)
-                    {
-                        resp.Success = true;
-                        resp.Data = http.Response.Data;
-                    }
-                    */
+
+//                    else if (!bError)
+ //                   {
+  //                      resp.Success = true;
+  //                      resp.Data = http.Response.Data;
+  //                  }
+
                     else
                     {
                         string errorMsg = http.Exception.Message;
@@ -539,6 +560,7 @@ namespace IBM.Watson.DeveloperCloud.Connection
                         req.OnResponse(req, resp);
 
                     http.Dispose();
+                    */
                 }
                 else
                 {
