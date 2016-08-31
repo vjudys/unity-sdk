@@ -26,6 +26,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using UnityEngine;
+using BestHTTP;
 
 #if UNITY_EDITOR
 using System.Net;
@@ -293,7 +294,11 @@ namespace IBM.Watson.DeveloperCloud.Connection
             {
                 // This co-routine will increment m_ActiveConnections then yield back to us so
                 // we can return from the Send() as quickly as possible.
+#if iOS
                 Runnable.Run(ProcessRequestQueue());
+#elif UNITY_EDITOR || UNITY_STANDALONE_WIN
+                Runnable.Run(ProcessRequestQueueProxy());
+#endif
             }
 
             return true;
@@ -323,6 +328,254 @@ namespace IBM.Watson.DeveloperCloud.Connection
 
             headers.Add("User-Agent", Constants.String.VERSION);
         }
+
+
+
+        private void InitRequestHeader(ref Request req, ref string url)
+        {
+            StringBuilder args = null;
+            foreach (var kp in req.Parameters)
+            {
+                var key = kp.Key;
+                var value = kp.Value;
+
+                if (value is string)
+                    value = WWW.EscapeURL((string)value);             // escape the value
+                else if (value is byte[])
+                    value = Convert.ToBase64String((byte[])value);    // convert any byte data into base64 string
+                else if (value is Int32 || value is Int64 || value is UInt32 || value is UInt64)
+                    value = value.ToString();
+                else if (value != null)
+                    Log.Warning("RESTConnector", "Unsupported parameter value type {0}", value.GetType().Name);
+                else
+                    Log.Error("RESTConnector", "Parameter {0} value is null", key);
+
+                if (args == null)
+                    args = new StringBuilder();
+                else
+                    args.Append("&");                  // append separator
+
+                args.Append(key + "=" + value);       // append key=value
+            }
+
+            if (args != null && args.Length > 0)
+                url += "?" + args.ToString();
+        }
+            
+        private HTTPRequest InitHttpRequest(Request req, string url)
+        {
+            HTTPRequest http = null;
+
+            if (req.Forms != null)
+            {
+                if (req.Send != null)
+                    Log.Warning("RESTConnector", "Do not use both Send & Form fields in a Request object.");
+
+                WWWForm form = new WWWForm();
+                try
+                {
+                    foreach (var kp in req.Forms)
+                    {
+                        if (kp.Value.IsBinary)
+                            form.AddBinaryData(kp.Key, kp.Value.Contents, kp.Value.FileName, kp.Value.MimeType);
+                        else if (kp.Value.BoxedObject is string)
+                            form.AddField(kp.Key, (string)kp.Value.BoxedObject);
+                        else if (kp.Value.BoxedObject is int)
+                            form.AddField(kp.Key, (int)kp.Value.BoxedObject);
+                        else if (kp.Value.BoxedObject != null)
+                            Log.Warning("RESTCOnnector", "Unsupported form field type {0}", kp.Value.BoxedObject.GetType().ToString());
+                    }
+                    foreach (var kp in form.headers)
+                        req.Headers[kp.Key] = kp.Value;
+                }
+                catch (Exception e)
+                {
+                    Log.Error("RESTConnector", "Exception when initializing WWWForm: {0}", e.ToString());
+                }
+                http = new HTTPRequest(new Uri(url), HTTPMethods.Post);
+                http.RawData = form.data;
+            }
+            else if (req.Send == null)
+            {
+                http = new HTTPRequest(new Uri(url), HTTPMethods.Post);
+                http.RawData = null;
+            }
+            else
+            {
+                http = new HTTPRequest(new Uri(url), HTTPMethods.Post);
+                http.RawData = req.Send;
+            }
+
+            // http proxy settings
+            if (Config.Instance.ActiveProxy)
+            {
+                http.Proxy = new HTTPProxy(new Uri("http://proxy.wde.woodside.com.au:8080"));
+            }
+
+            // setting up the header
+            if( req.Headers.Count > 0)
+            {
+                foreach(KeyValuePair<string,string> kvp in req.Headers)
+                {
+                    http.AddHeader(kvp.Key, kvp.Value);
+                }
+            }
+
+            return http;
+        }
+
+        private IEnumerator ProcessRequestQueueProxy()
+        {
+
+            // yield AFTER we increment the connection count, so the Send() function can return immediately
+            m_ActiveConnections += 1;
+            yield return null;
+
+            while (m_Requests.Count > 0)
+            {
+                Request req = m_Requests.Dequeue();
+                if (req.Cancel)
+                    continue;
+                string url = URL;
+
+                if (!string.IsNullOrEmpty(req.Function))
+                    url += req.Function;
+
+                InitRequestHeader(ref req, ref url);
+                AddHeaders(req.Headers);
+
+                Response resp = new Response();
+                DateTime startTime = DateTime.Now;
+
+                if (!req.Delete)
+                {
+                    HTTPRequest http = InitHttpRequest(req, url);
+                    
+                    http.Send();
+
+                    #if ENABLE_DEBUGGING
+                    Log.Debug("RESTCOnnector BestHTTP", "URL: {0}", url);
+                    #endif
+
+                    // wait for the request to complete.
+                    float timeout = Mathf.Max(Config.Instance.TimeOut, req.Timeout);
+
+                    while (http.State == HTTPRequestStates.Processing)
+                    {
+                        if (req.Cancel)
+                            break;
+                        if ((DateTime.Now - startTime).TotalSeconds > timeout)
+                            break;
+                        
+                        if (req.OnUploadProgress != null)
+                            req.OnUploadProgress(http.Uploaded/http.UploadLength);//www.uploadProgress);
+                        if (req.OnDownloadProgress != null)
+                            req.OnDownloadProgress(http.Downloaded/http.DownloadLength);//www.progress);
+                        
+                        yield return null;
+                    }
+
+                    if (req.Cancel)
+                    {
+                        continue;
+                    }
+
+                    bool bError = false;
+                    if (http.State == HTTPRequestStates.Error)
+                    {
+                        string errorMsg = http.Exception.Message;
+                        int nErrorCode = -1;
+                        int nSeperator = errorMsg.IndexOf(' ');
+                        if (nSeperator > 0 && int.TryParse(errorMsg.Substring(0, nSeperator).Trim(), out nErrorCode))
+                            bError = nErrorCode != 200;
+
+                        if (bError)
+                            Log.Error("RESTConnector", "URL: {0}, ErrorCode: {1}, Error: {2}, Response: ", url, nErrorCode, errorMsg);
+                                //string.IsNullOrEmpty(www.text) ? "" : www.text);
+                        else
+                            Log.Warning("RESTConnector", "URL: {0}, ErrorCode: {1}, Error: {2}, Response: ", url, nErrorCode, errorMsg);
+                                //string.IsNullOrEmpty(www.text) ? "" : www.text);
+                    }
+                    if (http.State == HTTPRequestStates.TimedOut)
+                    {
+                        Log.Error("RESTConnector", "Request timed out for URL: {0}", url);
+                        bError = true;
+                    }
+                        
+                    if (!bError && (http.Downloaded == null || http.DownloadLength == 0))
+                    {
+                        Log.Warning("RESTConnector", "No data recevied for URL: {0}", url);
+                        bError = true;
+                    }
+
+                    // generate the Response object now..
+                    if (http.State == HTTPRequestStates.Finished)
+                    {
+                        resp.Success = true;
+                        resp.Data = http.Response.Data;
+                    }
+                    /*
+                    else if (!bError)
+                    {
+                        resp.Success = true;
+                        resp.Data = http.Response.Data;
+                    }
+                    */
+                    else
+                    {
+                        string errorMsg = http.Exception.Message;
+                        resp.Success = false;
+                        resp.Error = string.Format("Request Error.\nURL: {0}\nError: {1}",
+                            url, string.IsNullOrEmpty(errorMsg) ? "Timeout" : errorMsg);
+                    }
+
+                    resp.ElapsedTime = (float)(DateTime.Now - startTime).TotalSeconds;
+
+                    // if the response is over a threshold, then log with status instead of debug
+                    if (resp.ElapsedTime > LogResponseTime)
+                        Log.Warning("RESTConnector", "Request {0} completed in {1} seconds.", url, resp.ElapsedTime);
+
+                    if (req.OnResponse != null)
+                        req.OnResponse(req, resp);
+
+                    http.Dispose();
+                }
+                else
+                {
+#if UNITY_EDITOR
+                    float timeout = Mathf.Max(Config.Instance.TimeOut, req.Timeout);
+
+                    DeleteRequest deleteReq = new DeleteRequest();
+                    deleteReq.Send(url, req.Headers);
+                    while (!deleteReq.IsComplete)
+                    {
+                        if (req.Cancel)
+                            break;
+                        if ((DateTime.Now - startTime).TotalSeconds > timeout)
+                            break;
+                        yield return null;
+                    }
+
+                    if (req.Cancel)
+                        continue;
+
+                    resp.Success = deleteReq.Success;
+#else
+                    Log.Warning( "RESTConnector", "DELETE method is supported in the editor only." );
+                    resp.Success = false;
+#endif
+                    resp.ElapsedTime = (float)(DateTime.Now - startTime).TotalSeconds;
+                    if (req.OnResponse != null)
+                        req.OnResponse(req, resp);
+                }
+            }
+
+            // reduce the connection count before we exit..
+            m_ActiveConnections -= 1;
+            yield break;
+        }
+
+
 
         private IEnumerator ProcessRequestQueue()
         {
@@ -374,11 +627,9 @@ namespace IBM.Watson.DeveloperCloud.Connection
                 DateTime startTime = DateTime.Now;
                 if (!req.Delete)
                 {
-#if UNITY_IOS
+
                     WWW www = null;
-#elif UNITY_STANDALONE_WIN
-                    WWWProxy www = null;
-#endif
+
                     if (req.Forms != null)
                     {
                         if (req.Send != null)
@@ -405,33 +656,15 @@ namespace IBM.Watson.DeveloperCloud.Connection
                         {
                             Log.Error("RESTConnector", "Exception when initializing WWWForm: {0}", e.ToString());
                         }
-#if UNITY_IOS
                         www = new WWW(url, form.data, req.Headers);
-#elif UNITY_STANDALONE_WIN
-                        www = new WWWProxy(url, form.data, req.Headers);
-                        www.InitProxy("proxy.wde.woodside.com.au", 8080);
-                        www.GetData();
-#endif
                     }
                     else if (req.Send == null)
                     {
-#if UNITY_IOS
                         www = new WWW(url, null, req.Headers);
-#elif UNITY_STANDALONE_WIN
-                        www = new WWWProxy(url, null, req.Headers);
-                        www.InitProxy("proxy.wde.woodside.com.au", 8080);
-                        www.GetData();
-#endif
                     }
                     else
                     {
-#if UNITY_IOS
                         www = new WWW(url, req.Send, req.Headers);
-#elif UNITY_STANDALONE_WIN
-                        www = new WWWProxy(url, req.Send, req.Headers);
-                        www.InitProxy ("proxy.wde.woodside.com.au", 8080);
-                        www.GetData();
-#endif
                     }
 
 #if ENABLE_DEBUGGING
@@ -481,7 +714,6 @@ namespace IBM.Watson.DeveloperCloud.Connection
                         Log.Warning("RESTConnector", "No data recevied for URL: {0}", url);
                         bError = true;
                     }
-
 
                     // generate the Response object now..
                     if (!bError)
@@ -536,7 +768,6 @@ namespace IBM.Watson.DeveloperCloud.Connection
                         req.OnResponse(req, resp);
                 }
             }
-
             // reduce the connection count before we exit..
             m_ActiveConnections -= 1;
             yield break;

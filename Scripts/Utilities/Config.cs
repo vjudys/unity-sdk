@@ -163,6 +163,9 @@ namespace IBM.Watson.DeveloperCloud.Utilities
 		[fsIgnore]
 		public string RefreshToken { get; set;}
 
+        [fsIgnore]
+        public bool ActiveProxy { get; set;}
+
         #endregion
 
         /// <summary>
