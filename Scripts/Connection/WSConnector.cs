@@ -283,8 +283,11 @@ namespace IBM.Watson.DeveloperCloud.Connection
 
                 ws = new WebSocket(URL);
 
-                #if UNITY_STANDALONE_WIN
-                ws.SetProxy("http://proxy.wde.woodside.com.au:8080","","");
+                #if UNITY_STANDALONE_WIN || UNITY_EDITOR
+                if (Config.Instance.ActiveProxy)
+                {
+                    ws.SetProxy("http://proxy.wde.woodside.com.au:8080","","");
+                }
                 #endif
 
                 if (Headers != null)

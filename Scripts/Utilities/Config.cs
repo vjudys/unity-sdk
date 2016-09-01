@@ -363,14 +363,22 @@ namespace IBM.Watson.DeveloperCloud.Utilities
         {
 #if UNITY_EDITOR || UNITY_STANDALONE_WIN
             // load the config using WWWProxy as most MS devices will need proxys
-
             BestHTTP.HTTPRequest request = new BestHTTP.HTTPRequest(new Uri(Application.streamingAssetsPath + Constants.Path.CONFIG_FILE));
             request.Send();
+            // if a proxy has been detected
+            if (Config.Instance.ActiveProxy)
+            {
+                request.Proxy = new BestHTTP.HTTPProxy(new Uri("http://proxy.wde.woodside.com.au:8080"));
+            }
+            // runs the request in a co-routine
             Runnable.Run(request);
+
             while (request.State == BestHTTP.HTTPRequestStates.Processing)
             {
                 yield return null;
             }
+
+            // passes the responce
             LoadConfig(request.Response.DataAsText);
 #else
             // load the config using WWW, since this works on all platforms..

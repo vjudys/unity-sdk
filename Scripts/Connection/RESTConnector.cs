@@ -392,17 +392,17 @@ namespace IBM.Watson.DeveloperCloud.Connection
                 {
                     Log.Error("RESTConnector", "Exception when initializing WWWForm: {0}", e.ToString());
                 }
-                http = new HTTPRequest(new Uri(url), HTTPMethods.Post);//, HTTPRequectComplete);
+                http = new HTTPRequest(new Uri(url), HTTPMethods.Post);
                 http.RawData = form.data;
             }
             else if (req.Send == null)
             {
-                http = new HTTPRequest(new Uri(url), HTTPMethods.Get);//, HTTPRequectComplete);
+                http = new HTTPRequest(new Uri(url), HTTPMethods.Get);
                 http.RawData = null;
             }
             else
             {
-                http = new HTTPRequest(new Uri(url), HTTPMethods.Post);//, HTTPRequectComplete);
+                http = new HTTPRequest(new Uri(url), HTTPMethods.Post);
                 http.RawData = req.Send;
             }
 
@@ -425,23 +425,6 @@ namespace IBM.Watson.DeveloperCloud.Connection
             return http;
         }
 
-        private void HTTPRequectComplete (HTTPRequest request, HTTPResponse responce)
-        {
-            Log.Error("http",responce.DataAsText, responce);
-            Log.Error("http",request.Exception.Message, responce);
-
-            Response resp = new Response();
-
-            if (responce != null)
-            {
-                resp.Data = responce.Data;
-                resp.Success = true;
-                resp.ElapsedTime = 0f;
-            }
-            else
-            {
-            }
-        }
 
         private IEnumerator ProcessRequestQueueProxy()
         {
