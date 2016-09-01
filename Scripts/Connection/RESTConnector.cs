@@ -392,17 +392,17 @@ namespace IBM.Watson.DeveloperCloud.Connection
                 {
                     Log.Error("RESTConnector", "Exception when initializing WWWForm: {0}", e.ToString());
                 }
-                http = new HTTPRequest(new Uri(url), HTTPMethods.Post, HTTPRequectComplete);
+                http = new HTTPRequest(new Uri(url), HTTPMethods.Post);//, HTTPRequectComplete);
                 http.RawData = form.data;
             }
             else if (req.Send == null)
             {
-                http = new HTTPRequest(new Uri(url), HTTPMethods.Post, HTTPRequectComplete);
+                http = new HTTPRequest(new Uri(url), HTTPMethods.Get);//, HTTPRequectComplete);
                 http.RawData = null;
             }
             else
             {
-                http = new HTTPRequest(new Uri(url), HTTPMethods.Post, HTTPRequectComplete);
+                http = new HTTPRequest(new Uri(url), HTTPMethods.Post);//, HTTPRequectComplete);
                 http.RawData = req.Send;
             }
 
@@ -441,8 +441,6 @@ namespace IBM.Watson.DeveloperCloud.Connection
             else
             {
             }
-
-
         }
 
         private IEnumerator ProcessRequestQueueProxy()
@@ -457,6 +455,7 @@ namespace IBM.Watson.DeveloperCloud.Connection
                 Request req = m_Requests.Dequeue();
                 if (req.Cancel)
                     continue;
+                
                 string url = URL;
 
                 if (!string.IsNullOrEmpty(req.Function))
@@ -468,19 +467,64 @@ namespace IBM.Watson.DeveloperCloud.Connection
                 Response resp = new Response();
                 DateTime startTime = DateTime.Now;
 
+
+                #if ENABLE_DEBUGGING
+                Log.Debug("RESTCOnnector BestHTTP", "URL: {0}", url);
+                #endif
+                
+
                 if (!req.Delete)
                 {
                     HTTPRequest http = InitHttpRequest(req, url);
                     
-                    http.Send();
                     /*
-                    #if ENABLE_DEBUGGING
-                    Log.Debug("RESTCOnnector BestHTTP", "URL: {0}", url);
-                    #endif
+                    http.OnProgress += (proReg, down, length) =>
+                        {
+                            req.OnDownloadProgress(down / (float)length);
+                        };
+                    http.OnUploadProgress += (proReg, up, length) =>
+                        {
+                            req.OnUploadProgress(up / (float)length);
+                        };
+                    */
 
-                    // wait for the request to complete.
-                    float timeout = Mathf.Max(Config.Instance.TimeOut, req.Timeout);
+                    http.Send();
+                    Runnable.Run(http);
 
+
+                    while (http.State == HTTPRequestStates.Processing)
+                    {
+                        //Log.Debug("Proxy Processing", "Currently proxy is processing");
+                        yield return null;
+                    }
+
+                    if ((http.State == HTTPRequestStates.Finished) || (http.State == HTTPRequestStates.Error))
+                    {
+                        if (http != null)
+                        {
+                            if (http.Response == null)
+                            {
+                                Log.Warning("Proxy Information", http.Exception.Message);
+                                resp.Success = false;
+                                resp.Error = http.Exception.Message;
+                            }
+                            else
+                            {
+                                Log.Warning("Proxy Information", http.Response.StatusCode.ToString());
+                                Log.Warning("Proxy Information", http.Response.Message);
+
+                                resp.Success = true;
+                                resp.Data = http.Response.Data;
+                            }
+                        }
+                    }
+
+                    if (req.OnResponse != null)
+                        req.OnResponse(req, resp);
+
+                    http.Dispose();
+
+                    /*
                     while (http.State == HTTPRequestStates.Processing)
                     {
                         if (req.Cancel)
@@ -535,13 +579,6 @@ namespace IBM.Watson.DeveloperCloud.Connection
                         resp.Success = true;
                         resp.Data = http.Response.Data;
                     }
-
-//                    else if (!bError)
- //                   {
-  //                      resp.Success = true;
-  //                      resp.Data = http.Response.Data;
-  //                  }
-
                     else
                     {
                         string errorMsg = http.Exception.Message;
