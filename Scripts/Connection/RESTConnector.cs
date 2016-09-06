@@ -219,6 +219,10 @@ namespace IBM.Watson.DeveloperCloud.Connection
         /// Additional headers to attach to all requests.
         /// </summary>
         public Dictionary<string, string> Headers { get; set; }
+		/// <summary>
+		/// Indicates whether this connection requests and responses should be logged.
+		/// </summary>
+		public bool LogConnector = true;
         #endregion
 
         #region Private Data
@@ -408,9 +412,8 @@ namespace IBM.Watson.DeveloperCloud.Connection
                     else
                         www = new WWW(url, req.Send, req.Headers);
 
-#if ENABLE_DEBUGGING
-                    Log.Debug("RESTCOnnector", "URL: {0}", url);
-#endif
+					if (LogConnector)
+                    	Log.Status("RESTCOnnector", "Request sent to URL: {0}", url);
 
                     // wait for the request to complete.
                     float timeout = Mathf.Max(Config.Instance.TimeOut, req.Timeout);

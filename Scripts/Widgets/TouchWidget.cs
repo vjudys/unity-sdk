@@ -90,7 +90,7 @@ namespace IBM.Watson.DeveloperCloud.Widgets
                 }
                 else
                 {
-                    Log.Warning("TouchWidget", "Callback function needs to be defined to register TouchWidget - Tap");
+					Log.Warning("TouchWidget", "Callback function needs to be defined to register TouchWidget - Tap. Mapping: Callback '{0}', CallbackString '{1}'.", mapping.m_Callback, mapping.m_CallbackString);
                 }
             }
 
@@ -106,7 +106,7 @@ namespace IBM.Watson.DeveloperCloud.Widgets
                 }
                 else
                 {
-                    Log.Warning("TouchWidget", "Callback function needs to be defined to register TouchWidget - Drag");
+					Log.Warning("TouchWidget", "Callback function needs to be defined to register TouchWidget - Drag. Mapping: Callback '{0}', CallbackString '{1}'.", mapping.m_Callback, mapping.m_CallbackString);
                 }
             }
         }
@@ -131,7 +131,7 @@ namespace IBM.Watson.DeveloperCloud.Widgets
                 }
                 else
                 {
-                    Log.Warning("TouchWidget", "Callback function needs to be defined to unregister TouchWidget - Tap");
+					Log.Warning("TouchWidget", "Callback function needs to be defined to unregister TouchWidget - Tap. Mapping: Callback '{0}', CallbackString '{1}'.", mapping.m_Callback, mapping.m_CallbackString);
                 }
             }
 
@@ -147,7 +147,7 @@ namespace IBM.Watson.DeveloperCloud.Widgets
                 }
                 else
                 {
-                    Log.Warning("TouchWidget", "Callback function needs to be defined to unregister TouchWidget - Drag");
+					Log.Warning("TouchWidget", "Callback function needs to be defined to unregister TouchWidget - Drag. Mapping: Callback '{0}', CallbackString '{1}'.", mapping.m_Callback, mapping.m_CallbackString);
                 }
 
 				
