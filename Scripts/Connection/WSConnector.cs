@@ -321,9 +321,19 @@ namespace IBM.Watson.DeveloperCloud.Connection
                         continue;
 
                     if (msg is TextMessage)
-                        ws.Send(((TextMessage)msg).Text);
+					{
+						ws.Send(((TextMessage)msg).Text);
+#if ENABLE_MESSAGE_DEBUGGING
+						Log.Debug("WSConnector", "Sent text message '{0}'.", ((TextMessage)msg).Text);
+#endif
+					}
                     else if (msg is BinaryMessage)
+					{
                         ws.Send(((BinaryMessage)msg).Data);
+#if ENABLE_MESSAGE_DEBUGGING
+						Log.Debug("WSConnector", "Sent binary message, length={0}.", ((BinaryMessage)msg).Data.Length);
+#endif
+					}
                 }
 
                 ws.Close();
