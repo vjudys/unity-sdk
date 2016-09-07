@@ -16,7 +16,7 @@
 */
 
 // uncomment to enable debugging
-#define ENABLE_DEBUGGING
+//#define ENABLE_DEBUGGING
 
 using IBM.Watson.DeveloperCloud.Utilities;
 using IBM.Watson.DeveloperCloud.Logging;
@@ -487,15 +487,18 @@ namespace IBM.Watson.DeveloperCloud.Connection
                         {
                             if (http.Response == null)
                             {
+                                #if ENABLE_DEBUGGING
                                 Log.Warning("Proxy Information", http.Exception.Message);
+                                #endif
                                 resp.Success = false;
                                 resp.Error = http.Exception.Message;
                             }
                             else
                             {
+                                #if ENABLE_DEBUGGING
                                 Log.Warning("Proxy Information", http.Response.StatusCode.ToString());
                                 Log.Warning("Proxy Information", http.Response.Message);
-
+                                #endif
                                 resp.Success = true;
                                 resp.Data = http.Response.Data;
                             }
