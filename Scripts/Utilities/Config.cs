@@ -367,9 +367,16 @@ namespace IBM.Watson.DeveloperCloud.Utilities
             // if a proxy has been detected
             if (Config.Instance.ActiveProxy)
             {
-                request.Proxy = new BestHTTP.HTTPProxy(new Uri("http://proxy.wde.woodside.com.au:8080"));
+                // use a URI builder to generate the proxy uri
+                UriBuilder proxyUriBuilder = new UriBuilder();
+                proxyUriBuilder.Host = "proxy.wde.woodside.com.au";
+                proxyUriBuilder.Port = 8080;
+                proxyUriBuilder.Scheme = "https";
+                request.Proxy = new BestHTTP.HTTPProxy(proxyUriBuilder.Uri);
             }
+
             request.Send();
+
             // runs the request in a co-routine
             Runnable.Run(request);
 

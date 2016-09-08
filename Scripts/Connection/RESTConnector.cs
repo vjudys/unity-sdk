@@ -409,7 +409,12 @@ namespace IBM.Watson.DeveloperCloud.Connection
             // http proxy settings
             if (Config.Instance.ActiveProxy)
             {
-                http.Proxy = new HTTPProxy(new Uri("http://proxy.wde.woodside.com.au:8080"));
+                // use a URI builder to generate the proxy uri
+                UriBuilder proxyUriBuilder = new UriBuilder();
+                proxyUriBuilder.Host = "proxy.wde.woodside.com.au";
+                proxyUriBuilder.Port = 8080;
+                proxyUriBuilder.Scheme = "https";
+                http.Proxy = new HTTPProxy(proxyUriBuilder.Uri);
             }
 
             // setting up the header
