@@ -361,7 +361,13 @@ namespace IBM.Watson.DeveloperCloud.Utilities
 
         private IEnumerator LoadConfigCR()
         {
-#if UNITY_EDITOR || UNITY_STANDALONE_WIN
+#if UNITY_IOS
+            // load the config using WWW, since this works on all platforms..
+            WWW request = new WWW(Application.streamingAssetsPath + Constants.Path.CONFIG_FILE);
+            while (!request.isDone)
+            yield return null;
+            LoadConfig(request.text);
+#else
             // load the config using WWWProxy as most MS devices will need proxys
             BestHTTP.HTTPRequest request = new BestHTTP.HTTPRequest(new Uri(Application.streamingAssetsPath + Constants.Path.CONFIG_FILE));
             
@@ -393,12 +399,6 @@ namespace IBM.Watson.DeveloperCloud.Utilities
 
             // passes the responce
             LoadConfig(request.Response.DataAsText);
-#else
-            // load the config using WWW, since this works on all platforms..
-            WWW request = new WWW(Application.streamingAssetsPath + Constants.Path.CONFIG_FILE);
-            while (!request.isDone)
-                yield return null;
-            LoadConfig(request.text);
 #endif
             yield break;
         }

@@ -298,7 +298,7 @@ namespace IBM.Watson.DeveloperCloud.Connection
             {
                 // This co-routine will increment m_ActiveConnections then yield back to us so
                 // we can return from the Send() as quickly as possible.
-#if iOS
+#if IOS
                 Runnable.Run(ProcessRequestQueue());
 #elif UNITY_EDITOR || UNITY_STANDALONE_WIN
                 Runnable.Run(ProcessRequestQueueProxy());
