@@ -300,7 +300,7 @@ namespace IBM.Watson.DeveloperCloud.Connection
                 // we can return from the Send() as quickly as possible.
 #if UNITY_IOS
                 Runnable.Run(ProcessRequestQueue());
-#elif UNITY_EDITOR || UNITY_STANDALONE_WIN
+#else
                 Runnable.Run(ProcessRequestQueueProxy());
 #endif
             }
