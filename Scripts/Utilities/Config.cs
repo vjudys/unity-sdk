@@ -364,15 +364,21 @@ namespace IBM.Watson.DeveloperCloud.Utilities
 #if UNITY_EDITOR || UNITY_STANDALONE_WIN
             // load the config using WWWProxy as most MS devices will need proxys
             BestHTTP.HTTPRequest request = new BestHTTP.HTTPRequest(new Uri(Application.streamingAssetsPath + Constants.Path.CONFIG_FILE));
+            
             // if a proxy has been detected
             if (Config.Instance.ActiveProxy)
             {
-                // use a URI builder to generate the proxy uri
-                UriBuilder proxyUriBuilder = new UriBuilder();
-                proxyUriBuilder.Host = "proxy.wde.woodside.com.au";
-                proxyUriBuilder.Port = 8080;
-                proxyUriBuilder.Scheme = "https";
-                request.Proxy = new BestHTTP.HTTPProxy(proxyUriBuilder.Uri);
+                if (!(Application.streamingAssetsPath + Constants.Path.CONFIG_FILE).Contains("cs.woodside.com.au"))
+                {
+                    // use a URI builder to generate the proxy uri
+                    UriBuilder proxyUriBuilder = new UriBuilder();
+                    proxyUriBuilder.Host = "proxy.wde.woodside.com.au";
+                    proxyUriBuilder.Port = 8080;
+                    proxyUriBuilder.Scheme = "http";
+                    request.Proxy = new BestHTTP.HTTPProxy(proxyUriBuilder.Uri);
+
+                    BestHTTP.HTTPManager.Logger.Level = BestHTTP.Logger.Loglevels.All;
+                }
             }
 
             request.Send();

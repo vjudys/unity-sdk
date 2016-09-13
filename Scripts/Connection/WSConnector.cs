@@ -287,7 +287,7 @@ namespace IBM.Watson.DeveloperCloud.Connection
 #if UNITY_STANDALONE_WIN || UNITY_EDITOR
                 if (Config.Instance.ActiveProxy)
                 {
-                    ws.SetProxy("http://proxy.wde.woodside.com.au:8080","","");
+                    //ws.SetProxy("http://proxy.wde.woodside.com.au:8080","","");
                 }
 #endif
 

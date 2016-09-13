@@ -413,12 +413,24 @@ namespace IBM.Watson.DeveloperCloud.Connection
             // http proxy settings
             if (Config.Instance.ActiveProxy)
             {
-                // use a URI builder to generate the proxy uri
-                UriBuilder proxyUriBuilder = new UriBuilder();
-                proxyUriBuilder.Host = "proxy.wde.woodside.com.au";
-                proxyUriBuilder.Port = 8080;
-                proxyUriBuilder.Scheme = "https";
-                http.Proxy = new HTTPProxy(proxyUriBuilder.Uri);
+                // if there is an exception to the REST connection via the proxy then add the proxy
+                Log.Debug("RESTConnector Proxy", "URL : " + url);
+                if (!url.Contains("cs.woodside.com.au"))
+                {
+                    // use a URI builder to generate the proxy uri
+                    UriBuilder proxyUriBuilder = new UriBuilder();
+                    proxyUriBuilder.Host = "proxy.wde.woodside.com.au";
+                    proxyUriBuilder.Port = 8080;
+
+                    proxyUriBuilder.Scheme = "http";
+                    http.Proxy = new HTTPProxy(proxyUriBuilder.Uri);
+                    http.UseAlternateSSL = true;
+
+                    http.IsKeepAlive = false;
+                    http.UseAlternateSSL = true;
+                    HTTPManager.KeepAliveDefaultValue = false;
+                    HTTPManager.UseAlternateSSLDefaultValue = true;
+                }
             }
 
             // setting up the header
@@ -437,6 +449,7 @@ namespace IBM.Watson.DeveloperCloud.Connection
 
         private IEnumerator ProcessRequestQueueProxy()
         {
+            Log.Debug("RESTCONNECTOR", "ActiveConnection :" + m_ActiveConnections.ToString());
 
             // yield AFTER we increment the connection count, so the Send() function can return immediately
             m_ActiveConnections += 1;
@@ -468,7 +481,7 @@ namespace IBM.Watson.DeveloperCloud.Connection
                 if (!req.Delete)
                 {
                     HTTPRequest http = InitHttpRequest(req, url);
-                    
+
                     /*
                     http.OnProgress += (proReg, down, length) =>
                         {
@@ -479,6 +492,8 @@ namespace IBM.Watson.DeveloperCloud.Connection
                             req.OnUploadProgress(up / (float)length);
                         };
                     */
+
+                    Log.Debug("RestConnector", "HttpRequest Created");
 
                     http.Send();
                     Runnable.Run(http);
