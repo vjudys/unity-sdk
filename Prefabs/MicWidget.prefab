@@ -115,16 +115,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_AutoConnect: 1
-  m_ActivateOnStart: 1
   m_AudioOutput:
-    m_TargetObject: {fileID: 0}
-    m_TargetConnection: 
+    m_Connections: []
   m_LevelOutput:
-    m_TargetObject: {fileID: 0}
-    m_TargetConnection: 
+    m_Connections: []
   m_ActivateOutput:
-    m_TargetObject: {fileID: 0}
-    m_TargetConnection: 
+    m_Connections: []
+  m_ActivateOnStart: 0
   m_RecordingBufferSize: 2
   m_RecordingHZ: 16000
   m_MicrophoneID: 

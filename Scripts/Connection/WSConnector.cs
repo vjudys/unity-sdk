@@ -293,8 +293,9 @@ namespace IBM.Watson.DeveloperCloud.Connection
             try
             {
                 WebSocket ws = null;
-
                 ws = new WebSocket(URL);
+
+                ws.Log.Level = WebSocketSharp.LogLevel.Trace; // Sets the logging of the websocket to show all debug messages
 
 #if !UNITY_IOS
                 if (Config.Instance.ActiveProxy)
@@ -364,6 +365,7 @@ namespace IBM.Watson.DeveloperCloud.Connection
 
         private void OnWSClose(object sender, CloseEventArgs e)
         {
+            Log.Warning("WSConnector", "WebSocket Closed : " + e.Code.ToString());
             m_ConnectionState = e.WasClean ? ConnectionState.CLOSED : ConnectionState.DISCONNECTED;
         }
 
@@ -382,6 +384,7 @@ namespace IBM.Watson.DeveloperCloud.Connection
 
         private void OnWSError(object sender, ErrorEventArgs e)
         {
+            Log.Warning("WSConnector", "WebSocket Error, Disconnected : " + e.Message);
             m_ConnectionState = ConnectionState.DISCONNECTED;
         }
         #endregion
