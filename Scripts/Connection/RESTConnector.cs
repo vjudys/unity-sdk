@@ -449,7 +449,9 @@ namespace IBM.Watson.DeveloperCloud.Connection
 
         private IEnumerator ProcessRequestQueueProxy()
         {
+            #if ENABLE_DEBUGGING
             Log.Debug("RESTCONNECTOR", "ActiveConnection :" + m_ActiveConnections.ToString());
+            #endif
 
             // yield AFTER we increment the connection count, so the Send() function can return immediately
             m_ActiveConnections += 1;
@@ -493,7 +495,9 @@ namespace IBM.Watson.DeveloperCloud.Connection
                         };
                     */
 
+                    #if ENABLE_DEBUGGING
                     Log.Debug("RestConnector", "HttpRequest Created");
+                    #endif
 
                     http.Send();
                     Runnable.Run(http);
@@ -534,80 +538,6 @@ namespace IBM.Watson.DeveloperCloud.Connection
 
                     http.Dispose();
 
-                    /*
-                    while (http.State == HTTPRequestStates.Processing)
-                    {
-                        if (req.Cancel)
-                            break;
-                        if ((DateTime.Now - startTime).TotalSeconds > timeout)
-                            break;
-                        
-                        if (req.OnUploadProgress != null)
-                            req.OnUploadProgress(http.Uploaded/http.UploadLength);//www.uploadProgress);
-                        if (req.OnDownloadProgress != null)
-                            req.OnDownloadProgress(http.Downloaded/http.DownloadLength);//www.progress);
-                        
-                        yield return null;
-                    }
-
-                    if (req.Cancel)
-                    {
-                        continue;
-                    }
-
-                    bool bError = false;
-                    if (http.State == HTTPRequestStates.Error)
-                    {
-                        string errorMsg = http.Exception.Message;
-                        int nErrorCode = -1;
-                        int nSeperator = errorMsg.IndexOf(' ');
-                        if (nSeperator > 0 && int.TryParse(errorMsg.Substring(0, nSeperator).Trim(), out nErrorCode))
-                            bError = nErrorCode != 200;
-
-                        if (bError)
-                            Log.Error("RESTConnector", "URL: {0}, ErrorCode: {1}, Error: {2}, Response: ", url, nErrorCode, errorMsg);
-                                //string.IsNullOrEmpty(www.text) ? "" : www.text);
-                        else
-                            Log.Warning("RESTConnector", "URL: {0}, ErrorCode: {1}, Error: {2}, Response: ", url, nErrorCode, errorMsg);
-                                //string.IsNullOrEmpty(www.text) ? "" : www.text);
-                    }
-                    if (http.State == HTTPRequestStates.TimedOut)
-                    {
-                        Log.Error("RESTConnector", "Request timed out for URL: {0}", url);
-                        bError = true;
-                    }
-                        
-                    if (!bError && (http.Downloaded == null || http.DownloadLength == 0))
-                    {
-                        Log.Warning("RESTConnector", "No data recevied for URL: {0}", url);
-                        bError = true;
-                    }
-
-                    // generate the Response object now..
-                    if (http.State == HTTPRequestStates.Finished)
-                    {
-                        resp.Success = true;
-                        resp.Data = http.Response.Data;
-                    }
-                    else
-                    {
-                        string errorMsg = http.Exception.Message;
-                        resp.Success = false;
-                        resp.Error = string.Format("Request Error.\nURL: {0}\nError: {1}",
-                            url, string.IsNullOrEmpty(errorMsg) ? "Timeout" : errorMsg);
-                    }
-
-                    resp.ElapsedTime = (float)(DateTime.Now - startTime).TotalSeconds;
-
-                    // if the response is over a threshold, then log with status instead of debug
-                    if (resp.ElapsedTime > LogResponseTime)
-                        Log.Warning("RESTConnector", "Request {0} completed in {1} seconds.", url, resp.ElapsedTime);
-
-                    if (req.OnResponse != null)
-                        req.OnResponse(req, resp);
-
-                    http.Dispose();
-                    */
                 }
                 else
                 {

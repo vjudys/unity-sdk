@@ -207,11 +207,19 @@ namespace IBM.Watson.DeveloperCloud.Connection
                 msg is TextMessage ? "TextMessage" : "BinaryMessage", 
                 msg is TextMessage ? ((TextMessage)msg).Text : ((BinaryMessage)msg).Data.Length.ToString() + " bytes" );
 #endif
+            Log.Debug("WSConnector.Send", "Locking SendQueue");
             lock (m_SendQueue)
             {
                 m_SendQueue.Enqueue(msg);
                 if (!queue)
                     m_SendEvent.Set();
+            }
+
+            Log.Debug("WSConnector.Send", "Is there a Queue :"+ queue.ToString());
+            Log.Debug("WSConnector.Send", "Does a Thread exis: "+ (m_SendThread != null).ToString() );
+            if (m_SendThread != null)
+            {
+                Log.Debug("WSConnector.Send", "Thread Alive : " + m_SendThread.IsAlive.ToString());
             }
 
             if (!queue && m_SendThread == null)
@@ -220,10 +228,12 @@ namespace IBM.Watson.DeveloperCloud.Connection
 
                 // start an actual thread for working with the WebSocket, otherwise
                 // we'll get errors from deep inside the library code.
+                Log.Debug("WSConnector.Send", "Creating and Starting a Thread");
                 m_SendThread = new Thread(SendMessages);
                 m_SendThread.Start();
             }
 
+            Log.Debug("WSConnector.Send", "Is there a reciever thread, " + (!(m_ReceiverRoutine == 0)).ToString());
             // Run our receiver as a co-routine so it can invoke functions 
             // on the main thread.
             if (m_ReceiverRoutine == 0)
@@ -235,6 +245,7 @@ namespace IBM.Watson.DeveloperCloud.Connection
         /// </summary>
         public void Close()
         {
+            Log.Debug("WSConnector.Close", "Closing Thread");
             // setting the state to closed will make the SendThread automatically exit.
             m_ConnectionState = ConnectionState.CLOSED;
         }
@@ -277,13 +288,14 @@ namespace IBM.Watson.DeveloperCloud.Connection
         // NOTE: ALl functions in this region are operating in a background thread, do NOT call any Unity functions!
         private void SendMessages()
         {
+            Log.Debug("WSConnector.SendMessage", "At the start of the method");
+
             try
             {
                 WebSocket ws = null;
 
                 ws = new WebSocket(URL);
 
-                // if a proxy is needed
 #if !UNITY_IOS
                 if (Config.Instance.ActiveProxy)
                 {

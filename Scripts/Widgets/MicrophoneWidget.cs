@@ -19,6 +19,7 @@
 using IBM.Watson.DeveloperCloud.DataTypes;
 using IBM.Watson.DeveloperCloud.Logging;
 using IBM.Watson.DeveloperCloud.Utilities;
+using IBM.Watson.Solutions.XRay.STT;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -99,9 +100,15 @@ namespace IBM.Watson.DeveloperCloud.Widgets
                 {
                     m_Active = value;
                     if (m_Active && !m_Disabled)
+                    {
                         StartRecording();
+                        OpenSTTConnection();
+                    }
                     else
+                    {
                         StopRecording();
+                        CloseSTTConnection();
+                    }
                 }
             }
         }
@@ -117,9 +124,15 @@ namespace IBM.Watson.DeveloperCloud.Widgets
                 {
                     m_Disabled = value;
                     if (m_Active && !m_Disabled)
+                    {
                         StartRecording();
+                        OpenSTTConnection();
+                    }
                     else
+                    {
                         StopRecording();
+                        CloseSTTConnection();
+                    }
                 }
             }
         }
@@ -149,6 +162,41 @@ namespace IBM.Watson.DeveloperCloud.Widgets
         {
             Active = !Active;
         }
+        #endregion
+
+
+        #region SpeechToText 
+        private XRaySpeechToTextWidget m_SttWidget = null;
+        public XRaySpeechToTextWidget SpeechToTextWidget
+        {
+            get
+            {
+                if (m_SttWidget == null)
+                {
+                    m_SttWidget = GameObject.FindObjectOfType<XRaySpeechToTextWidget>();
+                    if (m_SttWidget == null)
+                        throw new WatsonException("Failed to find SpeechToText widget.");
+                }
+                return m_SttWidget;
+            }
+        }
+
+        private void CloseSTTConnection()
+        {
+            if (SpeechToTextWidget != null)
+                m_SttWidget.Active = false;
+            else
+                Log.Warning("Microphone Widget", "STT Widget not found");
+        }
+
+        private void OpenSTTConnection()
+        {
+            if (SpeechToTextWidget != null)
+                m_SttWidget.Active = true;
+            else
+                Log.Warning("Microphone Widget", "STT Widget not found");
+        }
+
         #endregion
 
         #region Public Functions
@@ -183,8 +231,11 @@ namespace IBM.Watson.DeveloperCloud.Widgets
         protected override void Start()
         {
             base.Start();
+            // Starts the micropohone on startup
             if (m_ActivateOnStart)
                 Active = true;
+            else
+                Active = false;
         }
         private void Update()
         {
