@@ -264,12 +264,17 @@ namespace IBM.Watson.DeveloperCloud.Debug
                 // turn off all key press events..
                 KeyEventManager.Instance.Active = false;
 
-                //	turn off mic
-                if (m_MicWidget != null)
-					m_MicWidget.Disable = true;
 
-                //	timer to turn mic back on
-                StartCoroutine(EnableMicAfterTime(10f));
+                // turn Microphone off if it is inactive
+                if (m_MicWidget.Active)
+                {
+                    //	turn off mic
+                    if (m_MicWidget != null)
+                        m_MicWidget.Disable = true;
+
+                    //	timer to turn mic back on
+                    StartCoroutine(EnableMicAfterTime(10f));
+                }
             }
         }
 
@@ -301,5 +306,6 @@ namespace IBM.Watson.DeveloperCloud.Debug
                 m_MicWidget.Disable = false;
         }
         #endregion
+
     }
 }

@@ -16,7 +16,7 @@
 */
 
 //! Uncomment to enable message debugging
-//#define ENABLE_MESSAGE_DEBUGGING
+// #define ENABLE_MESSAGE_DEBUGGING
 
 using IBM.Watson.DeveloperCloud.Logging;
 using IBM.Watson.DeveloperCloud.Utilities;
@@ -42,7 +42,7 @@ namespace IBM.Watson.DeveloperCloud.Connection
         /// Callback for a message received on the connector.
         /// </summary>
         /// <param name="resp">The message object.</param>
-        public delegate void MessageEvent(Message resp);
+        public delegate void MessageEvent( Message resp);
 
         /// <summary>
         /// ConnectionState enumeration describes the current state of this connector.
@@ -142,6 +142,7 @@ namespace IBM.Watson.DeveloperCloud.Connection
         /// The current state of this connector.
         /// </summary>
         public ConnectionState State { get { return m_ConnectionState; } set { m_ConnectionState = value; } }
+
         #endregion
 
         #region Private Data
@@ -297,13 +298,6 @@ namespace IBM.Watson.DeveloperCloud.Connection
 
                 ws.Log.Level = WebSocketSharp.LogLevel.Trace; // Sets the logging of the websocket to show all debug messages
 
-#if !UNITY_IOS
-                if (Config.Instance.ActiveProxy)
-                {
-                    //ws.SetProxy("http://proxy.wde.woodside.com.au:8080","","");
-                }
-#endif
-
                 if (Headers != null)
                     ws.Headers = Headers;
                 if (Authentication != null)
@@ -327,7 +321,9 @@ namespace IBM.Watson.DeveloperCloud.Connection
                     lock (m_SendQueue)
                     {
                         if (m_SendQueue.Count > 0)
+                        {
                             msg = m_SendQueue.Dequeue();
+                        }
                     }
 
                     if (msg == null)
@@ -365,7 +361,7 @@ namespace IBM.Watson.DeveloperCloud.Connection
 
         private void OnWSClose(object sender, CloseEventArgs e)
         {
-            Log.Warning("WSConnector", "WebSocket Closed : " + e.Code.ToString());
+            Log.Debug("WSConnector", "WebSocket Closed : " + e.Code.ToString());
             m_ConnectionState = e.WasClean ? ConnectionState.CLOSED : ConnectionState.DISCONNECTED;
         }
 
@@ -384,7 +380,7 @@ namespace IBM.Watson.DeveloperCloud.Connection
 
         private void OnWSError(object sender, ErrorEventArgs e)
         {
-            Log.Warning("WSConnector", "WebSocket Error, Disconnected : " + e.Message);
+            Log.Debug("WSConnector", "WebSocket Error, Disconnected : " + e.Message);
             m_ConnectionState = ConnectionState.DISCONNECTED;
         }
         #endregion
