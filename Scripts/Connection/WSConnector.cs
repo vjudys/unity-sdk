@@ -207,21 +207,22 @@ namespace IBM.Watson.DeveloperCloud.Connection
             Log.Debug( "WSConnector", "Sending {0} message: {1}",
                 msg is TextMessage ? "TextMessage" : "BinaryMessage", 
                 msg is TextMessage ? ((TextMessage)msg).Text : ((BinaryMessage)msg).Data.Length.ToString() + " bytes" );
-#endif
             Log.Debug("WSConnector.Send", "Locking SendQueue");
+#endif
             lock (m_SendQueue)
             {
                 m_SendQueue.Enqueue(msg);
                 if (!queue)
                     m_SendEvent.Set();
             }
-
+#if ENABLE_MESSAGE_DEBUGGING
             Log.Debug("WSConnector.Send", "Is there a Queue :"+ queue.ToString());
             Log.Debug("WSConnector.Send", "Does a Thread exis: "+ (m_SendThread != null).ToString() );
             if (m_SendThread != null)
             {
                 Log.Debug("WSConnector.Send", "Thread Alive : " + m_SendThread.IsAlive.ToString());
             }
+#endif
 
             if (!queue && m_SendThread == null)
             {
@@ -233,8 +234,9 @@ namespace IBM.Watson.DeveloperCloud.Connection
                 m_SendThread = new Thread(SendMessages);
                 m_SendThread.Start();
             }
-
+#if ENABLE_MESSAGE_DEBUGGING
             Log.Debug("WSConnector.Send", "Is there a reciever thread, " + (!(m_ReceiverRoutine == 0)).ToString());
+#endif
             // Run our receiver as a co-routine so it can invoke functions 
             // on the main thread.
             if (m_ReceiverRoutine == 0)
@@ -289,8 +291,6 @@ namespace IBM.Watson.DeveloperCloud.Connection
         // NOTE: ALl functions in this region are operating in a background thread, do NOT call any Unity functions!
         private void SendMessages()
         {
-            Log.Debug("WSConnector.SendMessage", "At the start of the method");
-
             try
             {
                 WebSocket ws = null;
