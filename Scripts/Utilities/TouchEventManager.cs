@@ -15,8 +15,10 @@
 *
 */
 
+// TODO: investigate the raycasting of multiple objects at multiple depths, I think there may be a bug, but need to investigate further.
+
 // uncomment to enable debugging
-//#define ENABLE_DEBUGGING
+#define ENABLE_DEBUGGING
 
 using UnityEngine;
 using UnityEngine.UI;
@@ -784,13 +786,14 @@ namespace IBM.Watson.DeveloperCloud.Utilities
 
         private void TwoFingerTransformedHandler(object sender, System.EventArgs e)
         {
+
             RaycastHit hitToFire3D = default(RaycastHit);
             RaycastHit2D hitToFire2D = default(RaycastHit2D);
             #if UNITY_4_6 || UNITY_5 || UNITY_5_3_OR_NEWER
             RaycastResult hitToFire2DEventSystem = default(RaycastResult);
             #endif
 
-            //Log.Status ("TouchEventManager", "TwoFingerTransformedHandler: {0}", m_TwoFingerMoveGesture.DeltaPosition);
+
             if (m_Active)
             {
                 TouchEventData dragEventToFire = null;
@@ -826,6 +829,7 @@ namespace IBM.Watson.DeveloperCloud.Utilities
                         Transform hitTransform2DEventSystem = null;
                         bool isHitOnLayer2DEventSystem = false;
                         RaycastResult hit2DEventSystem = default(RaycastResult);
+                        // if event system exists perform the following
                         if (EventSystem.current != null)
                         {
                             PointerEventData pointerEventForTap = new PointerEventData(EventSystem.current);
