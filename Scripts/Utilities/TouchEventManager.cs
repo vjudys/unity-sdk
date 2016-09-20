@@ -18,7 +18,7 @@
 // TODO: investigate the raycasting of multiple objects at multiple depths, I think there may be a bug, but need to investigate further.
 
 // uncomment to enable debugging
-#define ENABLE_DEBUGGING
+// #define ENABLE_DEBUGGING
 
 using UnityEngine;
 using UnityEngine.UI;
