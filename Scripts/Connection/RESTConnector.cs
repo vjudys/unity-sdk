@@ -365,7 +365,12 @@ namespace IBM.Watson.DeveloperCloud.Connection
             if (args != null && args.Length > 0)
                 url += "?" + args.ToString();
         }
-            
+
+
+        /// <summary>
+        /// Creates an HTTPRequest with settings, this is not used when using iOS build settings
+        /// </summary>
+        /// <returns>The http request object</returns>
         private HTTPRequest InitHttpRequest(Request req, string url)
         {
             HTTPRequest http = null;

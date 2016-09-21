@@ -9,6 +9,9 @@ public class ConfigLoader : MonoBehaviour
     private GameObject m_Prefab = null;
     private GameObject m_CreatedObject = null;
 
+    [SerializeField]
+    private bool m_SurfaceBuild = false;
+
     #region OnEnable / OnDisable - Registering events
     void OnEnable()
     {
@@ -23,14 +26,17 @@ public class ConfigLoader : MonoBehaviour
 
     IEnumerator Start()
     {
-        /*
-        // Very rudementry way of getting all builds to be low res, this is not very effective, but needed for Surface Distribution, until we have some time to implement a "clever" solution
-        QualitySettings.SetQualityLevel(1);
-        if ((QualitySettings.names[QualitySettings.GetQualityLevel()] == "LoRes") || (QualitySettings.names[QualitySettings.GetQualityLevel()] == "Tablet"))
+
+        // TODO: SETUP A SURFACE GLOBAL NAME that will allow builds to be surface specific, and disable and lower certain qualities
+        if (m_SurfaceBuild)
         {
-            Screen.SetResolution (1440, 900, true, 60);
+            // Very rudementry way of getting all builds to be low res, this is not very effective, but needed for Surface Distribution, until we have some time to implement a "clever" solution
+            QualitySettings.SetQualityLevel(1);
+            if ((QualitySettings.names[QualitySettings.GetQualityLevel()] == "LoRes") || (QualitySettings.names[QualitySettings.GetQualityLevel()] == "Tablet"))
+            {
+                Screen.SetResolution(1440, 900, true, 60);
+            }
         }
-        */
 
         // wait for the configuration to be loaded first..
         while (!Config.Instance.ConfigLoaded)
