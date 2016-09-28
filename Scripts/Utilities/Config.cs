@@ -31,6 +31,7 @@ namespace IBM.Watson.DeveloperCloud.Utilities
     /// </summary>
 	public class Config
     {
+        #region Data Model
         /// <summary>
         /// Serialized class for holding generic key/value pairs.
         /// </summary>
@@ -80,7 +81,7 @@ namespace IBM.Watson.DeveloperCloud.Utilities
             }
 
             /// <summary>
-            /// Parses a BlueMix json credentials into this object.
+            /// Parses a BlueMix json credentials into this object. This is usualy executed from the Unity Editor tool
             /// </summary>
             /// <param name="json">The JSON data to parse.</param>
             /// <returns>Returns true on success.</returns>
@@ -104,6 +105,7 @@ namespace IBM.Watson.DeveloperCloud.Utilities
                 return false;
             }
         }
+        #endregion
 
         #region Private Data
         [fsProperty]

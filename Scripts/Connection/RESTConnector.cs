@@ -532,8 +532,17 @@ namespace IBM.Watson.DeveloperCloud.Connection
                                 Log.Warning("Proxy Information", http.Response.StatusCode.ToString());
                                 Log.Warning("Proxy Information", http.Response.Message);
                                 #endif
-                                resp.Success = true;
-                                resp.Data = http.Response.Data;
+                                if (http.Response.IsSuccess)    // response is not null but the end result was not correct
+                                {
+                                    resp.Success = true;
+                                    resp.Data = http.Response.Data;
+                                    
+                                }
+                                else
+                                {
+                                    resp.Success = false;
+                                    resp.Error = "Error "+ http.Response.StatusCode.ToString() + " : " + http.Response.Message;
+                                }
                             }
                         }
                     }
