@@ -61,4 +61,27 @@ public class ConfigLoader : MonoBehaviour
         }
         StartCoroutine(Start());
     }
+        
+    public void Update()
+    {
+        OrientScreen();
+    }
+
+    // Sets the screen orientation
+    public void OrientScreen()
+    {
+        DeviceOrientation orientation = Input.deviceOrientation;
+        if (orientation == DeviceOrientation.LandscapeLeft)
+        {
+            Screen.orientation = ScreenOrientation.LandscapeLeft;
+        }
+        else if (orientation == DeviceOrientation.LandscapeRight)
+        {
+            Screen.orientation = ScreenOrientation.LandscapeRight;
+        }
+        else
+        {
+            Screen.orientation = ScreenOrientation.LandscapeRight;
+        }
+    }
 }
