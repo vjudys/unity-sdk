@@ -164,10 +164,37 @@ namespace IBM.Watson.DeveloperCloud.Utilities
 		/// <value>The refresh token.</value>
 		[fsIgnore]
 		public string RefreshToken { get; set;}
-
+        /// <summary>
+        /// Stores weather the system is behind a proxy.
+        /// </summary>
+        /// <value><c>true</c> if active proxy; otherwise, <c>false</c>.</value>
         [fsIgnore]
         public bool ActiveProxy { get; set;}
 
+        /// <summary>
+        /// Gets or sets a value indicating whether the session is logged in.
+        /// </summary>
+        [fsIgnore]
+        public bool IsLoggedIn { get; set; }
+
+        #endregion
+
+        #region Session Time
+        /// <summary>
+        /// Stores the time the user logged into there current session.
+        /// </summary>
+        private DateTime SessionStartTime { get; set;}
+
+        public void SetLoginTime()
+        {
+            SessionStartTime = System.DateTime.Now;
+        }
+
+        public int GetLoginDuration()
+        {
+            TimeSpan ts = System.DateTime.Now - SessionStartTime;
+            return (int)ts.TotalSeconds;
+        }
         #endregion
 
         /// <summary>
