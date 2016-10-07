@@ -26,18 +26,6 @@ public class ConfigLoader : MonoBehaviour
 
     IEnumerator Start()
     {
-
-        // TODO: SETUP A SURFACE GLOBAL NAME that will allow builds to be surface specific, and disable and lower certain qualities
-        if (m_SurfaceBuild)
-        {
-            // Very rudementry way of getting all builds to be low res, this is not very effective, but needed for Surface Distribution, until we have some time to implement a "clever" solution
-            QualitySettings.SetQualityLevel(1);
-            if ((QualitySettings.names[QualitySettings.GetQualityLevel()] == "LoRes") || (QualitySettings.names[QualitySettings.GetQualityLevel()] == "Tablet"))
-            {
-                Screen.SetResolution(1440, 900, true, 60);
-            }
-        }
-
         // wait for the configuration to be loaded first..
         while (!Config.Instance.ConfigLoaded)
             yield return null;
@@ -52,6 +40,9 @@ public class ConfigLoader : MonoBehaviour
     /// <param name="args"></param>
     public void OnUserLogOut(System.Object[] args)
     {
+        Config.Instance.IsLoggedIn = false;
+        StopWatch.instance.StopAllTimers();
+
         if (m_CreatedObject != null)
         {
             if (!m_CreatedObject.activeSelf)
@@ -82,6 +73,37 @@ public class ConfigLoader : MonoBehaviour
         else
         {
             Screen.orientation = ScreenOrientation.LandscapeRight;
+        }
+    }
+
+    public void Awake()
+    {
+        // TODO: SETUP A SURFACE GLOBAL NAME that will allow builds to be surface specific, and disable and lower certain qualities
+        if (m_SurfaceBuild)
+        {
+            // Very rudementry way of getting all builds to be low res, this is not very effective, but needed for Surface Distribution, until we have some time to implement a "clever" solution
+            QualitySettings.SetQualityLevel(1);
+            if ((QualitySettings.names[QualitySettings.GetQualityLevel()] == "LoRes") || (QualitySettings.names[QualitySettings.GetQualityLevel()] == "Tablet"))
+            {
+                Screen.SetResolution(1440, 900, true, 60);
+            }
+        }
+    }
+
+    //<summary> The applications focus has changed </sumary>
+    void OnApplicationFocus( bool hasFocus )
+    {
+        if ( hasFocus && Config.Instance.IsLoggedIn ) // application now in focus and user is logged in
+        {
+            if (Config.Instance.GetLoginDuration() > Azure.Instance.LOGOUT_DURATION)
+            {
+                EventManager.Instance.SendEvent("OnUserToLogout");
+            }
+            else if (Config.Instance.GetLoginDuration() > Azure.Instance.REFRESH_TOKEN_DURATION)
+            {
+                Azure.Instance.RefreshToken();
+                Config.Instance.SetLoginTime();
+            }
         }
     }
 }
