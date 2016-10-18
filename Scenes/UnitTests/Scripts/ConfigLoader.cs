@@ -131,20 +131,30 @@ public class ConfigLoader : MonoBehaviour
         }
     }
 
-
+    #region Close Application
     /// <summary>
     /// Ends the user session. This sends the current SessionID to the backend if there is one.
     /// </summary>
     public void EndUserSession()
     {
-        Log.Status("ConfigLoader", "Sending session close to backend");
-        
         //performs only if the session is valid
         if (!string.IsNullOrEmpty(Config.Instance.SessionID))
         {
+            Log.Status("ConfigLoader", "Sending session close to backend");
+
             // When Application Closes, sends sessionID to the backend.
             IBM.Watson.Solutions.XRay.Utilities.Session session = new IBM.Watson.Solutions.XRay.Utilities.Session();
-            session.StopSession(Config.Instance.SessionID);
+            session.StopSession(Config.Instance.SessionID, close:true);
+            StartCoroutine(KeepAlive()); // Hacky way of keeping the system alive for 4 seconds while we send the correlation ID to the backend
         }
     }
+
+    IEnumerator KeepAlive()
+    {
+        Log.Debug("ConfigLoader", "KeepAlive");
+        yield return new WaitForSeconds(4);
+        Log.Debug("ConfigLoader", "KeepAlive Complete");
+    }
+
+    #endregion
 }
