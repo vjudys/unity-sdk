@@ -504,12 +504,23 @@ namespace IBM.Watson.DeveloperCloud.Connection
                     Log.Debug("RestConnector", "HttpRequest Created");
                     #endif
 
+                    // Timeout setup
+                    float timeout = Mathf.Max(Config.Instance.TimeOut, req.Timeout);
+                    if (req.Timeout > 0f)
+                    {
+                        timeout = req.Timeout;
+                    }
+
+
                     http.Send();
                     Runnable.Run(http);
 
 
                     while (http.State == HTTPRequestStates.Processing)
                     {
+                        if ((DateTime.Now - startTime).TotalSeconds > timeout)
+                            break;
+
                         //Log.Debug("Proxy Processing", "Currently proxy is processing");
                         yield return null;
                     }
