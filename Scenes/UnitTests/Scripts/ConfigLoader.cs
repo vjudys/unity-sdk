@@ -145,6 +145,8 @@ public class ConfigLoader : MonoBehaviour
             // When Application Closes, sends sessionID to the backend.
             IBM.Watson.Solutions.XRay.Utilities.Session session = new IBM.Watson.Solutions.XRay.Utilities.Session();
             session.StopSession(Config.Instance.SessionID);
+            Config.Instance.SessionID = null;
+
         }
     }
 }
