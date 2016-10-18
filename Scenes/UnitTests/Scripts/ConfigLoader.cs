@@ -1,6 +1,8 @@
 ﻿using UnityEngine;
 using System.Collections;
 using IBM.Watson.DeveloperCloud.Utilities;
+using IBM.Watson.DeveloperCloud.Logging;
+
 
 //! This helper class makes sure the Watson configuration is fully loaded before we try to access any of the services.
 public class ConfigLoader : MonoBehaviour
@@ -10,7 +12,7 @@ public class ConfigLoader : MonoBehaviour
     private GameObject m_CreatedObject = null;
 
     [SerializeField]
-    private bool m_SurfaceBuild = false;
+    private bool m_SurfaceBuild = false; // true to set if this is a surface build and force the resolution
 
     #region OnEnable / OnDisable - Registering events
     void OnEnable()
@@ -24,6 +26,7 @@ public class ConfigLoader : MonoBehaviour
     }
     #endregion
 
+    #region Unity Monobehavior Functions
     IEnumerator Start()
     {
         // wait for the configuration to be loaded first..
@@ -34,6 +37,40 @@ public class ConfigLoader : MonoBehaviour
         m_CreatedObject = GameObject.Instantiate(m_Prefab);
     }
 
+    public void Update()
+    {
+        OrientScreen();
+    }
+
+    public void Awake()
+    {
+        SetScreenResolution();
+    }
+
+    public void OnApplicationQuit()
+    {
+        //sends the close session to the user on the backend
+        EndUserSession();
+    }
+
+    //<summary> The applications focus has changed </sumary>
+    void OnApplicationFocus( bool hasFocus )
+    {
+        if ( hasFocus && Config.Instance.IsLoggedIn ) // application now in focus and user is logged in
+        {
+            if (Config.Instance.GetLoginDuration() > Azure.Instance.LOGOUT_DURATION)
+            {
+                EventManager.Instance.SendEvent("OnUserToLogout");
+            }
+            else if (Config.Instance.GetLoginDuration() > Azure.Instance.REFRESH_TOKEN_DURATION)
+            {
+                Azure.Instance.RefreshToken();
+                Config.Instance.SetLoginTime();
+            }
+        }
+    }
+    #endregion
+
     /// <summary>
     /// Handler for user logout
     /// </summary>
@@ -43,6 +80,9 @@ public class ConfigLoader : MonoBehaviour
         Config.Instance.IsLoggedIn = false;
         StopWatch.instance.StopAllTimers();
 
+        // Stops the session when user logs out
+        EndUserSession();
+
         if (m_CreatedObject != null)
         {
             if (!m_CreatedObject.activeSelf)
@@ -50,13 +90,10 @@ public class ConfigLoader : MonoBehaviour
 
             m_CreatedObject.SendMessage("DestroyCreatedObject", SendMessageOptions.DontRequireReceiver);
         }
+
         StartCoroutine(Start());
     }
-        
-    public void Update()
-    {
-        OrientScreen();
-    }
+
 
     // Sets the screen orientation
     public void OrientScreen()
@@ -76,7 +113,11 @@ public class ConfigLoader : MonoBehaviour
         }
     }
 
-    public void Awake()
+
+    /// <summary>
+    /// Sets the screen resolution.
+    /// </summary>
+    private void SetScreenResolution()
     {
         // TODO: SETUP A SURFACE GLOBAL NAME that will allow builds to be surface specific, and disable and lower certain qualities
         if (m_SurfaceBuild)
@@ -90,20 +131,22 @@ public class ConfigLoader : MonoBehaviour
         }
     }
 
-    //<summary> The applications focus has changed </sumary>
-    void OnApplicationFocus( bool hasFocus )
+
+    /// <summary>
+    /// Ends the user session. This sends the current SessionID to the backend if there is one.
+    /// </summary>
+    public void EndUserSession()
     {
-        if ( hasFocus && Config.Instance.IsLoggedIn ) // application now in focus and user is logged in
+        Log.Status("ConfigLoader", "Sending session close to backend");
+        
+        //performs only if the session is valid
+        if (!string.IsNullOrEmpty(Config.Instance.SessionID))
         {
-            if (Config.Instance.GetLoginDuration() > Azure.Instance.LOGOUT_DURATION)
-            {
-                EventManager.Instance.SendEvent("OnUserToLogout");
-            }
-            else if (Config.Instance.GetLoginDuration() > Azure.Instance.REFRESH_TOKEN_DURATION)
-            {
-                Azure.Instance.RefreshToken();
-                Config.Instance.SetLoginTime();
-            }
+            // When Application Closes, sends sessionID to the backend.
+            IBM.Watson.Solutions.XRay.Utilities.Session session = new IBM.Watson.Solutions.XRay.Utilities.Session();
+            session.StopSession(Config.Instance.SessionID);
+            Config.Instance.SessionID = null;
+
         }
     }
 }

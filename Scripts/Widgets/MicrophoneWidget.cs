@@ -175,7 +175,10 @@ namespace IBM.Watson.DeveloperCloud.Widgets
                 {
                     m_SttWidget = GameObject.FindObjectOfType<XRaySpeechToTextWidget>();
                     if (m_SttWidget == null)
-                        throw new WatsonException("Failed to find SpeechToText widget.");
+                    {
+                        //throw new WatsonException("Failed to find SpeechToText widget.");
+                        Log.Critical("MicWidget", "Failed to find SpeechToText widget.");
+                    }
                 }
                 return m_SttWidget;
             }

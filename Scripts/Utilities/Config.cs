@@ -177,6 +177,12 @@ namespace IBM.Watson.DeveloperCloud.Utilities
         [fsIgnore]
         public bool IsLoggedIn { get; set; }
 
+        /// <summary>
+        /// Every time the user logs in this is there session ID, that is used to stamp the user login and logout on the backend.
+        /// </summary>
+        [fsIgnore]
+        public string SessionID { get; set; }
+
         #endregion
 
         #region Session Time
