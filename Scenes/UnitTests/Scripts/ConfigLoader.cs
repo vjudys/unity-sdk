@@ -50,7 +50,7 @@ public class ConfigLoader : MonoBehaviour
     public void OnApplicationQuit()
     {
         //sends the close session to the user on the backend
-        EndUserSession();
+        EndUserSession(true);
     }
 
     //<summary> The applications focus has changed </sumary>
@@ -81,7 +81,7 @@ public class ConfigLoader : MonoBehaviour
         StopWatch.instance.StopAllTimers();
 
         // Stops the session when user logs out
-        EndUserSession();
+        EndUserSession(false);
 
         if (m_CreatedObject != null)
         {
@@ -135,7 +135,7 @@ public class ConfigLoader : MonoBehaviour
     /// <summary>
     /// Ends the user session. This sends the current SessionID to the backend if there is one.
     /// </summary>
-    public void EndUserSession()
+    public void EndUserSession(bool quit)
     {
         //performs only if the session is valid
         if (!string.IsNullOrEmpty(Config.Instance.SessionID))
@@ -144,7 +144,7 @@ public class ConfigLoader : MonoBehaviour
 
             // When Application Closes, sends sessionID to the backend.
             IBM.Watson.Solutions.XRay.Utilities.Session session = new IBM.Watson.Solutions.XRay.Utilities.Session();
-            session.StopSession(Config.Instance.SessionID, close:true);
+            session.StopSession(Config.Instance.SessionID, close:quit);
             StartCoroutine(KeepAlive()); // Hacky way of keeping the system alive for 4 seconds while we send the correlation ID to the backend
         }
     }
