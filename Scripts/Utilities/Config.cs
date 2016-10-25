@@ -183,6 +183,13 @@ namespace IBM.Watson.DeveloperCloud.Utilities
         [fsIgnore]
         public string SessionID { get; set; }
 
+
+        [fsIgnore]
+        /// <summary>
+        /// Gets or sets the user setting, this will load/store any customisable settings.
+        /// </summary>
+        public UserSettings UserSetting{ get; private set;}
+
         #endregion
 
         #region Session Time
@@ -208,6 +215,8 @@ namespace IBM.Watson.DeveloperCloud.Utilities
         /// </summary>
         public Config()
         {
+            UserSetting = new UserSettings();
+
             LoadConfig();
         }
 
