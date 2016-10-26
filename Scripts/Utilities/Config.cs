@@ -228,6 +228,8 @@ namespace IBM.Watson.DeveloperCloud.Utilities
                 UserSetting = new UserSettings(loadcallback);
                 return true;
             }
+            else
+                UserSetting.ReInitilise(loadcallback);
             return false;
         }
 
