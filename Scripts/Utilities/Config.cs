@@ -215,9 +215,20 @@ namespace IBM.Watson.DeveloperCloud.Utilities
         /// </summary>
         public Config()
         {
-            UserSetting = new UserSettings();
+            // makes sure the UserSettings are set to null at the start of the application
+            UserSetting = null;
 
             LoadConfig();
+        }
+
+        public bool InitUserSettings(UserSettings.OnGetUserSettings loadcallback)
+        {
+            if (UserSetting == null)
+            {
+                UserSetting = new UserSettings(loadcallback);
+                return true;
+            }
+            return false;
         }
 
         /// <summary>
@@ -246,10 +257,11 @@ namespace IBM.Watson.DeveloperCloud.Utilities
                     Directory.CreateDirectory(Application.streamingAssetsPath);
                 LoadConfig(System.IO.File.ReadAllText(Application.streamingAssetsPath + Constants.Path.CONFIG_FILE));
 
-				// Now read a local override that would allows us to replace distrubuted values with the user specific ones
-				string localConfigFileName = Application.streamingAssetsPath + Constants.Path.LOCAL_CONFIG_FILE;
-				if (File.Exists(localConfigFileName))
-					MergeConfigs(System.IO.File.ReadAllText(localConfigFileName));
+                // Now read a local override that would allows us to replace distrubuted values with the user specific ones
+                string localConfigFileName = Application.streamingAssetsPath + Constants.Path.LOCAL_CONFIG_FILE;
+                if (File.Exists(localConfigFileName))
+                    MergeConfigs(System.IO.File.ReadAllText(localConfigFileName));
+
 			}
             catch (System.IO.FileNotFoundException)
             {
