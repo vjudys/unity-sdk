@@ -221,6 +221,9 @@ namespace IBM.Watson.DeveloperCloud.Utilities
             LoadConfig();
         }
 
+        /// <summary>
+        /// Initilises and loads the User settings from Server.
+        /// </summary>
         public bool InitUserSettings(UserSettings.OnGetUserSettings loadcallback)
         {
             if (UserSetting == null)
