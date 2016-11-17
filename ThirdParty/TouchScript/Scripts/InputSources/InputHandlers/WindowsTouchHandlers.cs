@@ -69,6 +69,7 @@ namespace TouchScript.InputSources.InputHandlers
                 case WM_POINTERDOWN:
                     if ((pointerInfo.pointerFlags & POINTER_FLAG_CANCELLED) == POINTER_FLAG_CANCELLED) break;
                     Tags tags = null;
+                    base.refreshScaling();
                     switch (pointerInfo.pointerType)
                     {
                         case POINTER_INPUT_TYPE.PT_MOUSE:
@@ -320,6 +321,12 @@ namespace TouchScript.InputSources.InputHandlers
                 RemoveProp(hMainWindow, PRESS_AND_HOLD_ATOM);
                 GlobalDeleteAtom(pressAndHoldAtomID);
             }
+        }
+
+        //<summary>Exposes a public method to refresh the screen dimensions, when monitor/resolution changes</summary>
+        public void refreshScaling()
+        {
+            initScaling();
         }
 
         protected void initScaling()
