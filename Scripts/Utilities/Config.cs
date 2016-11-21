@@ -32,6 +32,20 @@ namespace IBM.Watson.DeveloperCloud.Utilities
 	public class Config
     {
         #region Data Model
+
+        /// <summary>
+        /// Data used to tore the facet information
+        /// </summary>
+        public class FacetDataModel
+        {
+            public string Key;
+            public string Facet;
+            public string Name;
+            public string Desc;
+            public string Url_internal;
+            public string Url_external;
+        }
+
         /// <summary>
         /// Serialized class for holding generic key/value pairs.
         /// </summary>
@@ -118,6 +132,8 @@ namespace IBM.Watson.DeveloperCloud.Utilities
         private List<CredentialInfo> m_Credentials = new List<CredentialInfo>();
         [fsProperty]
         private List<Variable> m_Variables = new List<Variable>();
+        [fsProperty]
+        private List<FacetDataModel> m_FacetConfig = new List<FacetDataModel>(); // stores the FacetConfigData
 
         private static fsSerializer sm_Serializer = new fsSerializer();
         #endregion
@@ -359,6 +375,18 @@ namespace IBM.Watson.DeveloperCloud.Utilities
             Variable v = GetVariable(key);
             if (v != null)
                 return v.Value;
+
+            return null;
+        }
+
+        /// <summary>
+        /// Gets the facet config variable with the specified key.
+        /// </summary>
+        public FacetDataModel GetFacetConfigVariable(string key)
+        {
+            foreach (var var in m_FacetConfig)
+                if (var.Key == key)
+                    return var;
 
             return null;
         }
