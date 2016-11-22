@@ -203,8 +203,8 @@ namespace IBM.Watson.DeveloperCloud.Connection
         /// <param name="queue">If true, then this function will not signal or start the sending thread.</param>
         public void Send(Message msg, bool queue = false)
         {
-            Log.Warning("The Token getting sent with the message", Authentication.Token.ToString());
 #if ENABLE_MESSAGE_DEBUGGING
+            Log.Warning("The Token getting sent with the message", Authentication.Token.ToString());
             Log.Debug( "WSConnector", "Sending {0} message: {1}",
                 msg is TextMessage ? "TextMessage" : "BinaryMessage", 
                 msg is TextMessage ? ((TextMessage)msg).Text : ((BinaryMessage)msg).Data.Length.ToString() + " bytes" );

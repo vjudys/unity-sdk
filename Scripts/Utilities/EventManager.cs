@@ -94,7 +94,11 @@ namespace IBM.Watson.DeveloperCloud.Utilities
         public bool SendEvent(string eventName, params object[] args)
         {
             if (string.IsNullOrEmpty(eventName))
-                throw new ArgumentNullException(eventName);
+            {
+                //throw new ArgumentNullException(eventName);   // commented out and debug is used instead. throw causes willow to become unstable.
+                Log.Critical("Event Manager", "The event name is empty");
+                return false;
+            }
 
             List<OnReceiveEvent> receivers = null;
             if (m_EventMap.TryGetValue(eventName, out receivers))
