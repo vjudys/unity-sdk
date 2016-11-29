@@ -510,8 +510,9 @@ namespace IBM.Watson.DeveloperCloud.Connection
                     {
                         timeout = req.Timeout;
                     }
-
-
+                    #if ENABLE_DEBUGGING
+                    Log.Debug("RESTConnector","URL : " + http.Uri.ToString());
+                    #endif
                     http.Send();
                     Runnable.Run(http);
 
