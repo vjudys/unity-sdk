@@ -489,15 +489,17 @@ namespace IBM.Watson.DeveloperCloud.Connection
                 {
                     HTTPRequest http = InitHttpRequest(req, url);
 
+                    http.Timeout = new TimeSpan(0, 30, 0); // half an hour time out
+
                     /*
                     http.OnProgress += (proReg, down, length) =>
-                        {
-                            req.OnDownloadProgress(down / (float)length);
-                        };
+                    {
+                        req.OnDownloadProgress(down / (float)length);
+                    };
                     http.OnUploadProgress += (proReg, up, length) =>
-                        {
-                            req.OnUploadProgress(up / (float)length);
-                        };
+                    {
+                        req.OnUploadProgress(up / (float)length);
+                    };
                     */
 
                     #if ENABLE_DEBUGGING
@@ -520,7 +522,10 @@ namespace IBM.Watson.DeveloperCloud.Connection
                     while (http.State == HTTPRequestStates.Processing)
                     {
                         if ((DateTime.Now - startTime).TotalSeconds > timeout)
+                        {
+                            Log.Error("RESTConnector", "Time out error occured");
                             break;
+                        }
 
                         //Log.Debug("Proxy Processing", "Currently proxy is processing");
                         yield return null;
@@ -557,6 +562,13 @@ namespace IBM.Watson.DeveloperCloud.Connection
                                 }
                             }
                         }
+                    }
+
+                    // Timeout
+                    if (http.State == HTTPRequestStates.TimedOut)
+                    {
+                        resp.Success = false;
+                        resp.Error = "Error - Time out occured";
                     }
 
                     if (req.OnResponse != null)
