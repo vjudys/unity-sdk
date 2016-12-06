@@ -16,7 +16,7 @@
 */
 
 //! Uncomment to enable message debugging
-// #define ENABLE_MESSAGE_DEBUGGING
+//#define ENABLE_MESSAGE_DEBUGGING
 
 using IBM.Watson.DeveloperCloud.Logging;
 using IBM.Watson.DeveloperCloud.Utilities;
@@ -203,27 +203,29 @@ namespace IBM.Watson.DeveloperCloud.Connection
         /// <param name="queue">If true, then this function will not signal or start the sending thread.</param>
         public void Send(Message msg, bool queue = false)
         {
-#if ENABLE_MESSAGE_DEBUGGING
+            #if ENABLE_MESSAGE_DEBUGGING
             Log.Warning("The Token getting sent with the message", Authentication.Token.ToString());
             Log.Debug( "WSConnector", "Sending {0} message: {1}",
                 msg is TextMessage ? "TextMessage" : "BinaryMessage", 
                 msg is TextMessage ? ((TextMessage)msg).Text : ((BinaryMessage)msg).Data.Length.ToString() + " bytes" );
             Log.Debug("WSConnector.Send", "Locking SendQueue");
-#endif
+            #endif
+
             lock (m_SendQueue)
             {
                 m_SendQueue.Enqueue(msg);
                 if (!queue)
                     m_SendEvent.Set();
             }
-#if ENABLE_MESSAGE_DEBUGGING
+
+            #if ENABLE_MESSAGE_DEBUGGING
             Log.Debug("WSConnector.Send", "Is there a Queue :"+ queue.ToString());
             Log.Debug("WSConnector.Send", "Does a Thread exis: "+ (m_SendThread != null).ToString() );
             if (m_SendThread != null)
             {
                 Log.Debug("WSConnector.Send", "Thread Alive : " + m_SendThread.IsAlive.ToString());
             }
-#endif
+            #endif
 
             if (!queue && m_SendThread == null)
             {
@@ -331,8 +333,8 @@ namespace IBM.Watson.DeveloperCloud.Connection
                         continue;
 
                     if (msg is TextMessage)
-					{
-						ws.Send(((TextMessage)msg).Text);
+                    {
+                        ws.Send(((TextMessage)msg).Text);
 #if ENABLE_MESSAGE_DEBUGGING
                         Log.Debug("WSConnector", "Sent text message '{0}'.", ((TextMessage)msg).Text);
 #endif
