@@ -16,7 +16,7 @@
 */
 
 //! Uncomment to enable message debugging
-//#define ENABLE_MESSAGE_DEBUGGING
+#define ENABLE_MESSAGE_DEBUGGING
 
 using IBM.Watson.DeveloperCloud.Logging;
 using IBM.Watson.DeveloperCloud.Utilities;

@@ -15,7 +15,7 @@
 *
 */
 
-//#define ENABLE_DEBUGGING
+#define ENABLE_DEBUGGING
 
 using IBM.Watson.DeveloperCloud.DataTypes;
 using IBM.Watson.DeveloperCloud.Services.SpeechToText.v1;
