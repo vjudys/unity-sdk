@@ -204,7 +204,7 @@ namespace IBM.Watson.DeveloperCloud.Connection
         public void Send(Message msg, bool queue = false)
         {
             #if ENABLE_MESSAGE_DEBUGGING
-            Log.Warning("The Token getting sent with the message", Authentication.Token.ToString());
+            //Log.Warning("The Token getting sent with the message", Authentication.Token.ToString());
             Log.Debug( "WSConnector", "Sending {0} message: {1}",
                 msg is TextMessage ? "TextMessage" : "BinaryMessage", 
                 msg is TextMessage ? ((TextMessage)msg).Text : ((BinaryMessage)msg).Data.Length.ToString() + " bytes" );
