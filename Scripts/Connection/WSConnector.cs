@@ -362,10 +362,15 @@ namespace IBM.Watson.DeveloperCloud.Connection
             m_ConnectionState = ConnectionState.CONNECTED;
         }
 
+        /// <summary>
+        /// Raises the WS close event.
+        /// </summary>
         private void OnWSClose(object sender, CloseEventArgs e)
         {
-            Log.Debug("WSConnector", "WebSocket Closed : " + e.Code.ToString());
+            Log.Debug("WSConnector", "WebSocket Closed : " + e.Code.ToString() + " " + e.Reason.ToString() );
             m_ConnectionState = e.WasClean ? ConnectionState.CLOSED : ConnectionState.DISCONNECTED;
+
+            OnClose(this);
         }
 
         private void OnWSMessage(object sender, MessageEventArgs e)
