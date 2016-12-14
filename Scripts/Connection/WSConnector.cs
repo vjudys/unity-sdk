@@ -370,7 +370,7 @@ namespace IBM.Watson.DeveloperCloud.Connection
             Log.Debug("WSConnector", "WebSocket Closed : " + e.Code.ToString() + " " + e.Reason.ToString() );
             m_ConnectionState = e.WasClean ? ConnectionState.CLOSED : ConnectionState.DISCONNECTED;
 
-            OnClose(this);
+            Close();
         }
 
         private void OnWSMessage(object sender, MessageEventArgs e)
