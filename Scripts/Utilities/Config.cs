@@ -41,7 +41,8 @@ namespace IBM.Watson.DeveloperCloud.Utilities
             public string Key;
             public string Facet;
             public string Name;
-            public string Desc;
+            public string Desc_internal;
+            public string Desc_external;
             public string Url_internal;
             public string Url_external;
         }
