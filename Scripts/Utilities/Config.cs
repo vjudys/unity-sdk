@@ -45,6 +45,9 @@ namespace IBM.Watson.DeveloperCloud.Utilities
             public string Desc_external;
             public string Url_internal;
             public string Url_external;
+            public string Help_desc;
+            public string Help_btnTxt;
+            public string Url_help;
         }
 
         /// <summary>
