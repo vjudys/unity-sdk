@@ -415,12 +415,15 @@ namespace IBM.Watson.DeveloperCloud.Connection
                 http.RawData = req.Send;
             }
 
+
+            Log.Debug("RESTConnector Non-Proxy", "URL : " + url);   // remove this
+
             // http proxy settings
             if (Config.Instance.ActiveProxy)
             {
                 // if there is an exception to the REST connection via the proxy then add the proxy
                 Log.Debug("RESTConnector Proxy", "URL : " + url);
-                if (!url.Contains("cs.woodside.com.au"))
+                if (!url.Contains("cs.woodside.com.au") && !url.Contains("w2211351"))   // w2211351 is Bais local Mule server, which needs to ignore the proxy
                 {
                     // use a URI builder to generate the proxy uri
                     UriBuilder proxyUriBuilder = new UriBuilder();
