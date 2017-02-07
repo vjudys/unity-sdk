@@ -1,8 +1,8 @@
 ﻿using UnityEngine;
+using System;   // needed for Array
 using System.Collections;
 using IBM.Watson.DeveloperCloud.Utilities;
 using IBM.Watson.DeveloperCloud.Logging;
-
 
 //! This helper class makes sure the Watson configuration is fully loaded before we try to access any of the services.
 public class ConfigLoader : MonoBehaviour
@@ -13,6 +13,8 @@ public class ConfigLoader : MonoBehaviour
 
     [SerializeField]
     private bool m_SurfaceBuild = false; // true to set if this is a surface build and force the resolution
+
+    string[] m_CommandLineArgs = System.Environment.GetCommandLineArgs();
 
     #region OnEnable / OnDisable - Registering events
     void OnEnable()
@@ -122,13 +124,54 @@ public class ConfigLoader : MonoBehaviour
         // TODO: SETUP A SURFACE GLOBAL NAME that will allow builds to be surface specific, and disable and lower certain qualities
         if (m_SurfaceBuild)
         {
-            // Very rudementry way of getting all builds to be low res, this is not very effective, but needed for Surface Distribution, until we have some time to implement a "clever" solution
-            QualitySettings.SetQualityLevel(1);
-            if ((QualitySettings.names[QualitySettings.GetQualityLevel()] == "LoRes") || (QualitySettings.names[QualitySettings.GetQualityLevel()] == "Tablet"))
+            // Allows for the system to take in a resolution size
+            if (CheckInputResolution())
             {
-                Screen.SetResolution(1440, 900, true, 60);
+                SetResolutionWithArguments();
+            }
+            else
+            {
+                // Very rudementry way of getting all builds to be low res, this is not very effective, but needed for Surface Distribution, until we have some time to implement a "clever" solution
+                QualitySettings.SetQualityLevel(1);
+                if ((QualitySettings.names[QualitySettings.GetQualityLevel()] == "LoRes") || (QualitySettings.names[QualitySettings.GetQualityLevel()] == "Tablet"))
+                {
+                    Screen.SetResolution(1440, 900, true, 60);
+                }
             }
         }
+    }
+
+    /// <summary>
+    /// Checks the input arguments are the correct amount
+    /// </summary>
+    private bool CheckInputResolution()
+    {
+        if ((m_CommandLineArgs.Length) >= 3)
+            return true;
+        return false;
+    }
+
+    private void SetResolutionWithArguments()
+    {
+        // get index of the resolution input name
+        int resIndex = Array.FindIndex(m_CommandLineArgs, GetInputResolution);
+        // checks to see if there are two elements after the '-res' keyword
+        if ((m_CommandLineArgs.Length - (resIndex + 1)) >= 2)
+        {
+            int resWidth = Int32.Parse(m_CommandLineArgs[resIndex+1]);
+            int resHeight = Int32.Parse(m_CommandLineArgs[resIndex+2]);
+            Screen.SetResolution(resWidth, resHeight, true, 60);
+        }
+    }
+
+    /// <summary>
+    /// Predicate : Gets the input resolution.
+    /// </summary>
+    private static bool GetInputResolution(string s)
+    {
+        if (s.ToLower() == "-res")
+            return true;
+        return false;
     }
 
     #region Close Application
