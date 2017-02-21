@@ -427,17 +427,27 @@ namespace IBM.Watson.DeveloperCloud.Connection
                 {
                     // use a URI builder to generate the proxy uri
                     UriBuilder proxyUriBuilder = new UriBuilder();
-                    proxyUriBuilder.Host = "proxy.wde.woodside.com.au";
-                    proxyUriBuilder.Port = 8080;
+                    proxyUriBuilder.Host = "au-aws-igw@analytics.pvt"; //"proxy.wde.woodside.com.au";
+                    proxyUriBuilder.Port = 3128;//8080;
 
                     proxyUriBuilder.Scheme = "http";
                     http.Proxy = new HTTPProxy(proxyUriBuilder.Uri);
-                    http.UseAlternateSSL = true;
+                    http.Proxy.Credentials = new BestHTTP.Authentication.Credentials("", "");
 
-                    http.IsKeepAlive = false;
-                    http.UseAlternateSSL = true;
-                    HTTPManager.KeepAliveDefaultValue = false;
-                    HTTPManager.UseAlternateSSLDefaultValue = true;
+                    if (url.Contains("https"))
+                    {
+                        http.UseAlternateSSL = true;
+                        http.IsKeepAlive = false;
+                        HTTPManager.KeepAliveDefaultValue = false;
+                        HTTPManager.UseAlternateSSLDefaultValue = true;
+                    }
+                    else
+                    {
+                        http.UseAlternateSSL = false;
+                        http.IsKeepAlive = false;
+                        HTTPManager.KeepAliveDefaultValue = false;
+                        HTTPManager.UseAlternateSSLDefaultValue = false;
+                    }
                 }
             }
 
