@@ -427,7 +427,7 @@ namespace IBM.Watson.DeveloperCloud.Connection
                 {
                     // use a URI builder to generate the proxy uri
                     UriBuilder proxyUriBuilder = new UriBuilder();
-                    proxyUriBuilder.Host = "au-aws-igw@analytics.pvt"; //"proxy.wde.woodside.com.au";
+                    proxyUriBuilder.Host = "au-aws-igw.analytics.pvt"; //"proxy.wde.woodside.com.au";
                     proxyUriBuilder.Port = 3128;//8080;
 
                     proxyUriBuilder.Scheme = "http";
